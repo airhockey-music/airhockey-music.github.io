@@ -40,7 +40,11 @@ of chat. If it reports anything STALE, resolve that before starting new work.
 Step 3 is the whole reason a later chat can tell current from stale. Skipping it
 makes every future session report the artifacts as out of date.
 
-4. `python3 .claude/snapshot.py` — optional, but this is the only real safety net.
+4. `git add -A && git commit` — the site is a git repository now (see **Git and
+   GitHub Pages**). Only the website is tracked; the toolchain and `memory/` are not,
+   so a commit here is always a site change and never 79 MB of history.
+
+5. `python3 .claude/snapshot.py` — optional, but this is the only real safety net.
    It freezes source, both published builds and the upload zip into `memory/` under one
    timestamp and logs it in `memory/restore-points.md`. It refuses to run if anything
    is stale, so a snapshot is always of a coherent state.
@@ -120,7 +124,7 @@ reason the suite has ever caught anything. The pieces, if you need to iterate on
 | `shot.js` | WKWebView screenshotter — `canvas.toDataURL()` to a PNG |
 | `rescale.py` | resamples a capture to a real phone width, with no image library — this is how the floor-banding bug was found |
 | `layout.js` | measures the wide and 9:16 portrait layouts in a phone-sized webview |
-| `page.py` / `page.js` | the **site**, not the game: loads `index.html` in a real WKWebView and reports broken images, store-tile layout, release order and every bigcartel link |
+| `page.py` / `page.js` | the **site**, not the game: loads `index.html` in a real WKWebView and reports broken images, store-tile layout, release order, every bigcartel link, and any asset that ships without being referenced |
 | `music.py` | the soundtrack asset: bar alignment, the level either side of the join, and that neither end is silent |
 | `audio.py` | decodes the artifact's inlined audio in a real WKWebView and reads the loop points back |
 | `checks/music.js` | the wiring: gain, the mute key, and `loopWindow()` against synthetic buffers |
@@ -391,11 +395,41 @@ elsewhere and go stale:
   Afterwards run `python3 .claude/test/page.py`, which is the only thing here that
   can tell you an image reference actually resolves.
 
+## Git and GitHub Pages
+
+The project became a git repository on 2026-09-06, on `main`, so that a URL can serve
+the current build instead of the version an artifact's share pin happens to point at.
+
+- **The repository root is the site root.** Every path in both pages is relative, so
+  the site works unchanged at a user-site root, at a `/repo/` project-site subpath, or
+  from a local `python3 -m http.server`. Never introduce a leading-slash asset path —
+  it works at the root and breaks under a project subpath.
+- **`.nojekyll` skips the Jekyll build.** Nothing here needs Jekyll, and skipping it
+  means a stray `{{` or `{%` inside the game's script can never be eaten as a Liquid
+  tag. Do not delete it.
+- **Only the website is tracked.** `.gitignore` excludes `.claude/`, `memory/` and
+  `airhockey-site.zip`. That keeps the repository at ~5 MB and every commit a real site
+  change — but it also means **the build scripts and the test suite are not backed up by
+  git**. Their only history is `memory/` on this Mac. That is a deliberate trade, not an
+  oversight; if it ever needs reversing, drop the `.claude/` line and add
+  `.claude/*-artifact.html` instead, which is where the 9 MB actually is.
+- **The upload zip is still the right thing for any non-Pages host.** `sync-all.py`
+  builds it from the same globs, so the zip and the repository always hold the same
+  files.
+- **Publishing to Pages does not replace the artifacts.** They remain the shareable,
+  self-contained copies; the repository is the always-current one. Both still have to be
+  kept in sync by the loop at the top of this file.
+
+Enabling it, once a remote exists: repository **Settings -> Pages -> Deploy from a
+branch -> `main` / `/ (root)`**. There is no build step to configure.
+
 ## Project facts worth not re-deriving
 
-- **No canonical domain** exists anywhere in the project — no `og:url`, no
-  `rel=canonical`; contact is a gmail. Don't invent one; the artifacts cross-link to
-  each other instead.
+- **No canonical domain** exists in the pages yet — no `og:url`, no `rel=canonical`;
+  contact is a gmail. Don't invent one. The artifacts cross-link to each other instead.
+  This is the one fact most likely to go stale: the moment GitHub Pages is switched on
+  the site *has* a stable URL, and `og:url` plus `rel=canonical` should be added to
+  `index.html` then — check with Sebastian rather than assuming the address.
 - `memory/` in the project root is version history, not code: `archive/` (previous
   source), `artifacts/` (published snapshots), `snapshots/` (full site zips).
   `memory/README.md` is its manifest and the restore instructions.
