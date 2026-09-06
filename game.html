@@ -1,0 +1,4291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Airhockey Soundcheck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --lav:      #dbdcff;
+    --lav-bg:   #e9e9ff;
+    --paper:    #f3f2ff;
+    --mint:     #d4ffea;
+    --mint-2:   #9ff0cb;
+    --pink:     #eecbff;
+    --pink-2:   #d7a6f5;
+    --yellow:   #feffa3;
+    --sky:      #cfe4ff;
+
+    --ink:      #3a3360;
+    --ink-body: #56507e;
+    --ink-soft: rgba(58, 51, 96, 0.60);
+    --line:     rgba(58, 51, 96, 0.14);
+
+    --font-head: "Press Start 2P", monospace;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: var(--lav-bg);
+    color: var(--ink-body);
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .back:hover { color: var(--ink); }
+
+  /* the back link and the soundtrack toggle share the top line */
+  .topbar {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+  .topbar .back { align-self: center; }
+
+  /* The soundtrack toggle sits out here rather than in the drawn HUD because a click
+     anywhere on the canvas starts and restarts the run -- a button painted inside it
+     could not be pressed without also poking the game. */
+  .music-btn {
+    font-family: var(--font-head);
+    font-size: 0.5rem;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    background: var(--mint-2);
+    border: 2px solid var(--ink);
+    border-radius: 40px;
+    padding: 0.55em 0.9em;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 2px 2px 0 var(--pink-2);
+    -webkit-user-select: none; user-select: none;
+  }
+  .music-btn:hover { background: var(--yellow); }
+  .music-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--pink-2); }
+  .music-btn[aria-pressed="false"] { background: var(--paper); color: var(--ink-soft); }
+
+  h1 {
+    font-family: var(--font-head);
+    font-size: 0.95rem;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .stage {
+    position: relative;
+    border: 6px solid var(--ink);
+    border-radius: 10px;
+    background: var(--paper);
+    padding: 10px;
+    box-shadow: 0 10px 28px rgba(58,51,96,0.18);
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border-radius: 3px;
+    background: var(--lav-bg);
+  }
+
+  .hint {
+    font-family: var(--font-head);
+    font-size: 0.6rem;
+    color: var(--ink-soft);
+    text-align: center;
+    line-height: 2;
+    max-width: 480px;
+  }
+  .hint kbd {
+    background: var(--mint-2);
+    color: var(--ink);
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-family: var(--font-head);
+  }
+
+  /* ===== touch controls — shown only on coarse-pointer (touch) devices ===== */
+  .touch-controls {
+    display: none;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 500;
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+  }
+  @media (pointer: coarse) {
+    .touch-controls { display: flex; }
+    body { padding-bottom: 190px; }
+  }
+
+  .play-block { display: flex; flex-direction: column; align-items: stretch; }
+
+  /* ===== portrait phones: the canvas and the controls stack into one 9:16 block.
+     The canvas keeps its pixel scale and just shows a narrower window on the same
+     map, so nothing about the game itself is re-drawn for the smaller screen. ===== */
+  body.portrait { padding: 4px 4px 6px; gap: 0.3rem; padding-bottom: 6px; }
+  body.portrait h1,
+  body.portrait .hint { display: none; }
+  body.portrait .back { font-size: 0.72rem; padding-left: 4px; }
+  body.portrait .music-btn { font-size: 0.42rem; padding: 0.5em 0.7em; }
+  body.portrait .play-block {
+    align-self: center;
+    /* Fill the phone: as wide as the screen allows, or as wide as the *height* allows
+       at 9:16, whichever is smaller. dvh so the browser's own chrome is counted —
+       the vh line above it is the fallback for browsers without dvh. */
+    width: min(100vw - 8px, calc((100vh - 46px) * 9 / 16));
+    width: min(100vw - 8px, calc((100dvh - 46px) * 9 / 16));
+    aspect-ratio: 9 / 16;
+    border-radius: 8px;
+    overflow: hidden;
+    /* a ring rather than a border: a border would eat into the block and the 9:16 the
+       whole layout is built around would stop being 9:16 */
+    box-shadow: 0 0 0 3px var(--ink), 0 8px 22px rgba(58,51,96,0.2);
+  }
+  body.portrait .stage {
+    flex: 0 0 70%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  body.portrait canvas {
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    /* the canvas is drawn oversize and comes down to this box, so let the browser
+       resample smoothly — forcing nearest-neighbour here is what banded the floors */
+    image-rendering: auto;
+  }
+  body.portrait .touch-controls {
+    position: static;
+    display: flex;
+    flex: 0 0 30%;
+    min-height: 0;
+    width: 100%;
+    z-index: auto;
+    align-items: center;
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--paper);
+    border-top: 3px solid var(--ink);
+  }
+  /* the pad is a share of the block now, so the controls size off it rather than
+     being fixed pixel widths that only suit one phone */
+  body.portrait .stick {
+    width: min(38vw, 150px);
+    height: min(38vw, 150px);
+  }
+  body.portrait .stick-knob {
+    width: 44%;
+    height: 44%;
+    margin: 0;
+    transform-origin: center;
+    left: 28%;
+    top: 28%;
+  }
+  body.portrait .atk-btn {
+    width: min(26vw, 104px);
+    height: min(26vw, 104px);
+    font-size: 0.7rem;
+  }
+  /* analog swivel stick — the thumb drags the knob anywhere in the ring */
+  .stick {
+    position: relative;
+    width: 118px; height: 118px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: radial-gradient(circle at 50% 42%, rgba(243,242,255,0.94), rgba(219,220,255,0.8));
+    box-shadow: inset 0 2px 7px rgba(58,51,96,0.2);
+    pointer-events: auto;
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+  }
+  .stick::after {
+    content: "";
+    position: absolute; inset: 13px;
+    border-radius: 50%;
+    border: 1px dashed rgba(58,51,96,0.22);
+  }
+  .stick-knob {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 52px; height: 52px;
+    margin: -26px 0 0 -26px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--mint-2);
+    box-shadow: 0 2px 0 rgba(58,51,96,0.35);
+    transition: transform 0.07s linear;
+    will-change: transform;
+  }
+  .stick.active .stick-knob { background: var(--pink-2); transition: none; }
+  @media (prefers-reduced-motion: reduce) { .stick-knob { transition: none; } }
+  .atk-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: rgba(238, 203, 255, 0.9);
+    color: var(--ink);
+    font-family: var(--font-head);
+    font-size: 0.6rem;
+    pointer-events: auto;
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    align-self: flex-end;
+  }
+  .atk-btn:active { background: var(--pink-2); }
+
+  /* ===== VHS / shoegaze wash — layered on top of the game ===== */
+  .fx-soft, .fx-vignette, .fx-grain, .fx-scan, .fx-track, .fx-glitch, .fx-hud { position: fixed; pointer-events: none; }
+  .fx-soft {
+    inset: 0; z-index: 9996;
+    -webkit-backdrop-filter: blur(0.6px) saturate(1.2) contrast(1.05);
+    backdrop-filter: blur(0.6px) saturate(1.2) contrast(1.05);
+  }
+  .fx-vignette { inset: 0; z-index: 9997; background: radial-gradient(125% 105% at 50% 45%, transparent 54%, rgba(58,51,96,0.22)); }
+  .fx-grain {
+    top: -60%; left: -60%; width: 220%; height: 220%; z-index: 9998;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.55'/%3E%3C/svg%3E");
+    opacity: 0.22; mix-blend-mode: soft-light; animation: grainshift 0.34s steps(3) infinite;
+  }
+  @keyframes grainshift {
+    0%{transform:translate(0,0)} 20%{transform:translate(-4%,3%)} 40%{transform:translate(3%,-3%)}
+    60%{transform:translate(-3%,-2%)} 80%{transform:translate(4%,2%)} 100%{transform:translate(0,0)}
+  }
+  .fx-scan {
+    inset: 0; z-index: 9999;
+    background: repeating-linear-gradient(to bottom, rgba(58,51,96,0.10) 0px, rgba(58,51,96,0.10) 1px, transparent 1px, transparent 3px);
+    opacity: 0.72; mix-blend-mode: multiply;
+  }
+  .fx-track {
+    left: -5%; right: -5%; height: 120px; z-index: 10001;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.14) 50%, rgba(0,255,224,0.05) 58%, rgba(255,255,255,0.05) 65%, transparent);
+    filter: blur(2px); mix-blend-mode: overlay; opacity: 0.7; animation: track 7s linear infinite;
+  }
+  @keyframes track { 0%{transform:translateY(-140px)} 100%{transform:translateY(104vh)} }
+  .fx-glitch {
+    inset: 0; z-index: 10000; opacity: 0;
+    background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(0,255,224,0.30) 4px 6px, transparent 6px 10px, rgba(255,44,140,0.30) 10px 12px);
+    mix-blend-mode: screen; animation: vhsglitch 4.6s steps(1,end) infinite;
+  }
+  @keyframes vhsglitch {
+    0%,9%{opacity:0;transform:translate(0,0)}
+    9.4%{opacity:1;transform:translate(-14px,2px) skewX(-1.1deg)} 9.9%{opacity:.28;transform:translate(12px,-3px) skewX(1.3deg)}
+    10.4%{opacity:.9;transform:translate(-7px,1px)} 10.9%{opacity:0;transform:translate(0,0)}
+    42%{opacity:0;transform:translate(0,0)}
+    42.4%{opacity:.95;transform:translate(11px,-3px) skewX(1.1deg)} 42.9%{opacity:.22;transform:translate(-13px,2px)}
+    43.4%{opacity:.85;transform:translate(6px,0) skewX(-0.9deg)} 43.9%{opacity:0;transform:translate(0,0)}
+    75%{opacity:0;transform:translate(0,0)}
+    75.4%{opacity:1;transform:translate(-15px,3px) skewX(-1.3deg)} 75.9%{opacity:.25;transform:translate(10px,-2px)}
+    76.4%{opacity:.7;transform:translate(-5px,1px)} 76.9%{opacity:0;transform:translate(0,0)} 100%{opacity:0}
+  }
+  .fx-hud {
+    top: 14px; right: 16px; z-index: 10002;
+    display: flex; align-items: center; gap: 0.5em;
+    font-family: var(--font-head); font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(58,51,96,0.55);
+    text-shadow: 1px 0 0 rgba(255,44,140,0.4), -1px 0 0 rgba(0,200,200,0.4);
+  }
+  .fx-hud .rec { width: 8px; height: 8px; border-radius: 50%; background: #ff3b6b; box-shadow: 0 0 9px #ff3b6b; animation: recblink 1.1s steps(1) infinite; }
+  @keyframes recblink { 0%,50%{opacity:1} 50.01%,100%{opacity:0.12} }
+  @media (prefers-reduced-motion: reduce) {
+    .fx-grain, .fx-glitch, .fx-track, .fx-hud .rec { animation: none; }
+    .fx-glitch, .fx-track { display: none; }
+  }
+  @media (max-width: 600px) { .fx-hud { top: auto; bottom: 10px; right: 10px; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="index.html">&larr; back to airhockey.band</a>
+  <button type="button" class="music-btn" id="musicBtn" aria-pressed="true">&#9834; music on</button>
+</div>
+
+<h1>airhockey<br>the game</h1>
+
+<div class="play-block">
+  <div class="stage">
+    <canvas id="game" width="320" height="218"></canvas>
+  </div>
+
+  <div class="touch-controls" aria-hidden="true">
+    <div class="stick" id="stick"><span class="stick-knob"></span></div>
+    <button type="button" class="atk-btn" data-action="attack">HIT</button>
+  </div>
+</div>
+
+<p class="hint">move with <kbd>WASD</kbd> / <kbd>arrows</kbd> or the thumbstick on touch devices &middot; <kbd>M</kbd> for the music<br>find your gear before time runs out — every item fights differently; busting a red puck gives a life back, and Mel tears around the room dropping a bass boost that heals while you stand in it</p>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // band logo, flashed in the background of the finale — nearest-neighbor scaling keeps it chunky/8-bit
+  const logoImg = new Image();
+  logoImg.src = 'airhockey-logo-t.png';
+
+  // ---------- the soundtrack ----------
+  // The 8-bit cut of "felt", looped under the whole run. It plays through Web Audio
+  // rather than an <audio> tag because a media element re-primes its decoder every
+  // time it wraps, and that punches a hole in the join. The file is already built to
+  // loop: it is 46 bars at 83.5 BPM, with the original's 47th bar -- the last chord --
+  // folded back over the first at full volume, so the chord lands on the downbeat and
+  // rings out over the opening arpeggio instead of being cut off. What is left to
+  // deal with is the handful of silent frames an AAC decoder may leave on either end,
+  // and loopWindow() strips those by amplitude rather than trusting every decoder to
+  // honour the file's edit list.
+  const MUSIC_SRC  = 'music/felt-8bit-loop.m4a';
+  const MUSIC_GAIN = 0.35;    // about -9 dB: under the game, never over it
+  const MUSIC_FADE = 0.9;     // seconds, so it arrives rather than slamming in
+  const MUSIC_DUCK = 0.25;    // seconds to mute and unmute
+  const MUSIC_PAD  = 4096;    // codec padding is far under this; never eat real audio
+  const MUSIC_KEY  = 'airhockey.music';
+
+  const music = { on: true, ctx: null, gain: null, src: null, el: null, busy: false, dead: false };
+  try { music.on = localStorage.getItem(MUSIC_KEY) !== 'off'; } catch (e) { /* private browsing */ }
+  const musicBtn = document.getElementById('musicBtn');
+
+  function paintMusicBtn() {
+    if (!musicBtn) return;
+    musicBtn.textContent = music.on ? '♪ music on' : '♪ music off';
+    musicBtn.setAttribute('aria-pressed', music.on ? 'true' : 'false');
+  }
+
+  // Where the music really starts and ends inside the decoded buffer. Looping over a
+  // decoder's own padding is exactly the gap this whole approach exists to avoid, and
+  // the search is capped at MUSIC_PAD so a quiet bar can never be mistaken for it.
+  function loopWindow(buf) {
+    const ch = buf.getChannelData(0);
+    const quiet = 0.002;                       // -54 dBFS
+    let a = 0, b = buf.length;
+    while (a < MUSIC_PAD && Math.abs(ch[a]) < quiet) a++;
+    while (b > buf.length - MUSIC_PAD && Math.abs(ch[b - 1]) < quiet) b--;
+    return { start: a / buf.sampleRate, end: b / buf.sampleRate };
+  }
+
+  function rampMusic(to, secs) {
+    if (!music.gain || !music.ctx) return;
+    const g = music.gain.gain;
+    const t = music.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(to, t + secs);
+  }
+
+  // Browsers refuse to make a sound before the visitor has touched the page, so this
+  // hangs off the first key or tap rather than running at load.
+  function startMusic() {
+    if (music.dead || music.busy || music.src || music.el) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || typeof fetch !== 'function') { mediaMusic(); return; }
+    music.busy = true;
+    music.ctx = new AC();
+    music.gain = music.ctx.createGain();
+    music.gain.gain.value = 0;
+    music.gain.connect(music.ctx.destination);
+    if (music.ctx.resume) music.ctx.resume();
+    fetch(MUSIC_SRC)
+      .then((r) => r.arrayBuffer())
+      // both shapes of decodeAudioData: older Safari only has the callback one
+      .then((raw) => new Promise((ok, no) => {
+        const ret = music.ctx.decodeAudioData(raw, ok, no);
+        if (ret && ret.then) ret.then(ok, no);
+      }))
+      .then((buf) => {
+        music.busy = false;
+        const win = loopWindow(buf);
+        const src = music.ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        src.loopStart = win.start;
+        src.loopEnd = win.end;
+        src.connect(music.gain);
+        src.start(0, win.start);
+        music.src = src;
+        rampMusic(music.on ? MUSIC_GAIN : 0, MUSIC_FADE);
+      })
+      .catch(() => { music.busy = false; mediaMusic(); });
+  }
+
+  // Opened straight off the disk with file://, fetch is blocked and there is nothing
+  // to decode. A media element still plays the file; its loop is merely less tight.
+  function mediaMusic() {
+    if (music.el) return;
+    if (typeof Audio === 'undefined') { music.dead = true; return; }
+    const el = new Audio(MUSIC_SRC);
+    el.loop = true;
+    el.volume = music.on ? MUSIC_GAIN : 0;
+    music.el = el;
+    const p = el.play();
+    if (p && p.catch) p.catch(() => { music.el = null; });   // no gesture yet; the next one retries
+  }
+
+  function setMusic(on) {
+    music.on = on;
+    try { localStorage.setItem(MUSIC_KEY, on ? 'on' : 'off'); } catch (e) { /* private browsing */ }
+    paintMusicBtn();
+    rampMusic(on ? MUSIC_GAIN : 0, MUSIC_DUCK);
+    if (music.el) music.el.volume = on ? MUSIC_GAIN : 0;
+    if (on) startMusic();
+  }
+
+  paintMusicBtn();
+  if (musicBtn) musicBtn.addEventListener('click', () => setMusic(!music.on));
+  ['keydown', 'pointerdown', 'touchstart'].forEach((ev) => {
+    window.addEventListener(ev, startMusic, { once: true, passive: true });
+  });
+  // a game you tabbed away from should not still be playing
+  document.addEventListener('visibilitychange', () => {
+    const hidden = !!document.hidden;
+    if (music.ctx && music.ctx.suspend) {
+      if (hidden) music.ctx.suspend(); else music.ctx.resume();
+    }
+    if (music.el) {
+      if (hidden) music.el.pause();
+      else if (music.on) { const p = music.el.play(); if (p && p.catch) p.catch(() => {}); }
+    }
+  });
+
+  // ---------- two layouts ----------
+  // Desktop gets the wide screen it always had. A portrait phone gets a 9:16 block:
+  // the canvas takes the top 224 units, the stick and hit button the bottom 96, and
+  // 180 : (224 + 96) is exactly 9 : 16. The portrait canvas is the same map at the
+  // same tile size, just a narrower window onto it — a cut-out, not a redraw — so no
+  // gameplay geometry changes with the screen.
+  const LAYOUTS = {
+    wide:     { w: 320, h: 218, hud: 26, ctrl: 0 },
+    portrait: { w: 180, h: 224, hud: 32, ctrl: 96 },
+  };
+  const playBlock = document.querySelector('.play-block');
+  const touchPad = document.querySelector('.touch-controls');
+  const portraitQuery = window.matchMedia('(pointer: coarse) and (orientation: portrait)');
+  let layoutName = '';
+  let BASE_W, BASE_H, HUD_H, VIEW_W, VIEW_H;
+  // How many real pixels the canvas holds per game unit. Portrait stretches the canvas
+  // to a size that is not a whole multiple of 180, and drawing at 1:1 and letting the
+  // browser blow it up nearest-neighbour made the dithered floors band into diagonal
+  // streaks. Rendering into a buffer at least as large as the displayed size, and
+  // letting the browser resample that down smoothly, kills the moire and sharpens the
+  // text at the same time.
+  let renderScale = 1;
+
+  function setBacking(cssW) {
+    const want = Math.max(1, Math.min(3, Math.ceil(cssW / BASE_W)));
+    if (want === renderScale && canvas.width === BASE_W * want) return;
+    renderScale = want;
+    canvas.width = BASE_W * want;
+    canvas.height = BASE_H * want;
+    ctx.imageSmoothingEnabled = false;   // resetting the size clears this
+  }
+
+  // subtle CRT scanlines + vignette, baked once per layout and reused every frame
+  const overlay = document.createElement('canvas');
+  function buildOverlay() {
+    overlay.width = BASE_W;
+    overlay.height = BASE_H;
+    const octx = overlay.getContext('2d');
+    octx.clearRect(0, 0, BASE_W, BASE_H);
+    octx.fillStyle = 'rgba(10,6,20,0.16)';
+    for (let y = 0; y < BASE_H; y += 2) octx.fillRect(0, y, BASE_W, 1);
+    const vg = octx.createRadialGradient(BASE_W / 2, BASE_H / 2, BASE_H / 2.2,
+                                         BASE_W / 2, BASE_H / 2, BASE_H * 0.85);
+    vg.addColorStop(0, 'rgba(10,6,20,0)');
+    vg.addColorStop(1, 'rgba(10,6,20,0.45)');
+    octx.fillStyle = vg;
+    octx.fillRect(0, 0, BASE_W, BASE_H);
+  }
+
+  function fitCanvas() {
+    if (layoutName === 'portrait') {
+      // CSS sizes the block to fill the phone; the canvas just stretches to its share
+      canvas.style.width = '';
+      canvas.style.height = '';
+      if (touchPad) touchPad.style.height = '';
+      if (playBlock) {
+        playBlock.style.width = '';
+        // aspect-ratio handles this where it is supported. Setting the height outright
+        // keeps older WebKit honest and gives the 70/30 split a definite box to divide.
+        const w = playBlock.getBoundingClientRect().width;
+        playBlock.style.height = w ? Math.round(w * 16 / 9) + 'px' : '';
+      }
+      setBacking(canvas.getBoundingClientRect().width || BASE_W * 2);
+      return;
+    }
+    // desktop scales by whole numbers, where there is room to spare for it, and the
+    // buffer matches the displayed size exactly — one canvas pixel per screen pixel
+    const maxW = Math.min(window.innerWidth - 40, 960);
+    const scale = Math.max(1, Math.floor(maxW / BASE_W));
+    canvas.style.width = (BASE_W * scale) + 'px';
+    canvas.style.height = (BASE_H * scale) + 'px';
+    if (playBlock) { playBlock.style.width = ''; playBlock.style.height = ''; }
+    if (touchPad) touchPad.style.height = '';
+    setBacking(BASE_W * scale);
+  }
+
+  // `force` is only ever passed by the test harness, which has no real screen to ask
+  function applyLayout(force) {
+    const want = force || (portraitQuery.matches ? 'portrait' : 'wide');
+    if (want !== layoutName) {
+      const L = LAYOUTS[want];
+      layoutName = want;
+      BASE_W = L.w; BASE_H = L.h; HUD_H = L.hud;
+      VIEW_W = BASE_W; VIEW_H = BASE_H - HUD_H;
+      renderScale = 0;                  // force setBacking to resize for the new base
+      canvas.width = BASE_W;
+      canvas.height = BASE_H;
+      ctx.imageSmoothingEnabled = false;
+      document.body.classList.toggle('portrait', want === 'portrait');
+      buildOverlay();
+    }
+    fitCanvas();
+  }
+  const relayout = () => applyLayout();
+  window.addEventListener('resize', relayout);
+  window.addEventListener('orientationchange', relayout);
+  if (portraitQuery.addEventListener) portraitQuery.addEventListener('change', relayout);
+  applyLayout();
+
+  // ---------- palette (deeper / more saturated — SNES-era JRPG mood, not pastel-flat) ----------
+  const COLOR = {
+    floorA:     '#6d6fb0',
+    floorB:     '#5c5e99',
+    floorDust:  '#9092d4',
+    wall:       '#3f9d78',
+    wallMortar: '#245a44',
+    wallHighlight: '#7fe0b3',
+    rugA:       '#b25fd1',
+    rugB:       '#8f45ab',
+    tableBlue:  '#3a63a8',
+    tableBlueAlt: '#2a4a80',
+    tableWhite: '#eae7f2',
+    crate:      '#5a3d2b',
+    crateDark:  '#3f2a1d',
+    amp:        '#171225',
+    ampCone:    '#c9c4e6',
+    outline:    '#171225', // stays constant across every theme for a consistent hard edge
+  };
+
+  // per-venue palette overrides — same tile renderers, different fill colors, so each room reads distinctly
+  const THEMES = {
+    entrance: {},
+    // tiled and cold, but pulled down off white — at full brightness the room glared
+    // next to every other stage and nothing dropped on the floor stood out on it
+    bathroom: {
+      floorA: '#8fb0c4', floorB: '#7b9db2', floorDust: '#c2dbe8',
+      wall: '#c3d9e2', wallMortar: '#8fb3c1', wallHighlight: '#dcecf3',
+      tableBlue: '#6faec0', tableBlueAlt: '#548fa3', tableWhite: '#dfeef4',
+      crate: '#66757d', crateDark: '#4b5960',
+    },
+    // goth/punk dive: black-purple room, oxblood rug, brass trim on the bar
+    bar: {
+      floorA: '#2b2436', floorB: '#221c2b', floorDust: '#4a3f5c',
+      wall: '#3a2b3f', wallMortar: '#221828', wallHighlight: '#6a4f70',
+      rugA: '#5c1020', rugB: '#1c1018',
+      tableBlue: '#261a1c', tableBlueAlt: '#171012', tableWhite: '#c9a227',
+      crate: '#2f2436', crateDark: '#1c1522',
+    },
+    kitchen: {
+      floorA: '#a8b0b8', floorB: '#8f98a0', floorDust: '#d4dade',
+      wall: '#c9d2d8', wallMortar: '#9aa5ac', wallHighlight: '#ffffff',
+      tableBlue: '#7a8890', tableBlueAlt: '#5f6b72', tableWhite: '#e8edf0',
+      crate: '#8a5a2b', crateDark: '#5c3a1a',
+    },
+    // the backroom where the backline lives — dusty purple, green-painted walls
+    backroom: {
+      floorA: '#4a3f6e', floorB: '#3d3459', floorDust: '#6b5c90',
+      wall: '#2f4a3d', wallMortar: '#1c2e26', wallHighlight: '#7fd0a8',
+      rugA: '#c9a227', rugB: '#8a6a20',
+      tableBlue: '#8a5a2b', tableBlueAlt: '#6b4520', tableWhite: '#f2e0a0',
+      crate: '#3a3352', crateDark: '#2a2540',
+    },
+    patio: {
+      floorA: '#4a7a4f', floorB: '#3d6640', floorDust: '#6b9a70',
+      wall: '#8a9a5a', wallMortar: '#5c6a3a', wallHighlight: '#c9d98a',
+      crate: '#6b4a2f', crateDark: '#4a3220',
+    },
+  };
+  function themeFor(name) {
+    return Object.assign({}, COLOR, THEMES[name] || {});
+  }
+
+  // continuous checkerboard dither so the pattern doesn't reset at tile edges
+  function dither(x, y, w, h, colorA, colorB, cell) {
+    for (let yy = y; yy < y + h; yy += cell) {
+      for (let xx = x; xx < x + w; xx += cell) {
+        const parity = ((xx / cell) + (yy / cell)) % 2 === 0;
+        ctx.fillStyle = parity ? colorA : colorB;
+        ctx.fillRect(xx, yy, cell, cell);
+      }
+    }
+  }
+
+  // ---------- tile grid ----------
+  // the map is 2x2 screens; the canvas shows a 320x192 window that follows the player
+  const TILE = 16;
+  const COLS = 40;
+  const ROWS = 24;
+  // VIEW_W / VIEW_H are the camera window and come from the active layout above —
+  // 320x192 on desktop, 180x192 in portrait
+  const MAP_W = COLS * TILE;
+  const MAP_H = ROWS * TILE;
+  // '#' wall  'A' amp  'c' crate  'T' counter  'r' rope pole  'b' barricade  's' PA stack
+  // 'p' planter  'g' guitar stand  'y' keyboard  'k' drum kit  'i' mic stand
+  // 'o' bar stool  'B' back bar  'j' jukebox  'x' candelabra  'f' flyer-plastered wall
+  // 't' toilet  'w' washbasin
+  const SOLID = new Set(['#', 'T', 'A', 'c', 'r', 'b', 's', 'p',
+                         'g', 'y', 'k', 'i', 'o', 'B', 'j', 'x', 'f', 't', 'w']);
+
+  let camX = 0, camY = 0;
+  function updateCamera() {
+    const targetX = player.x + player.w / 2 - VIEW_W / 2;
+    const targetY = player.y + player.h / 2 - VIEW_H / 2;
+    camX = Math.round(Math.max(0, Math.min(MAP_W - VIEW_W, targetX)));
+    camY = Math.round(Math.max(0, Math.min(MAP_H - VIEW_H, targetY)));
+  }
+
+
+  function tileAt(col, row) {
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return '#';
+    return stage.rows[row][col];
+  }
+  // Every room is locked by its own elite — the doorman, then the attendant, and so
+  // on up to the chief. Put that one down and the gate retracts.
+  function gatesOpen() {
+    return !stage.bosses.some((b) => BOSS_KINDS[b.kind].gates);
+  }
+  // door unlocks once the item is collected OR every enemy in the room is defeated
+  function doorOpen() {
+    return stage.collected || stage.enemies.length === 0;
+  }
+  function isSolidPixel(px, py) {
+    const col = Math.floor(px / TILE);
+    const row = Math.floor(py / TILE);
+    const ch = tileAt(col, row);
+    if (ch === 'D') return !doorOpen();
+    if (ch === 'G') return !gatesOpen();
+    return SOLID.has(ch);
+  }
+
+  // only the tiles inside the camera window get drawn
+  function drawMap() {
+    const th = stage.theme;
+    const c0 = Math.max(0, Math.floor(camX / TILE));
+    const c1 = Math.min(COLS - 1, Math.ceil((camX + VIEW_W) / TILE));
+    const r0 = Math.max(0, Math.floor(camY / TILE));
+    const r1 = Math.min(ROWS - 1, Math.ceil((camY + VIEW_H) / TILE));
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const ch = stage.rows[row][col];
+        const x = col * TILE, y = row * TILE;
+        if (ch === '#') drawWallTile(x, y, col, row);
+        else if (ch === 'A') { drawFloorTile(x, y, col, row); drawAmp(x, y); }
+        else if (ch === '~') dither(x, y, TILE, TILE, th.rugA, th.rugB, 8);
+        else if (ch === 'T') drawTableTile(col, row, x, y);
+        else if (ch === 'c') drawCrateTile(x, y);
+        else if (ch === 'r') { drawFloorTile(x, y, col, row); drawRopePole(x, y, col, row); }
+        else if (ch === 'b') { drawFloorTile(x, y, col, row); drawBarricade(x, y); }
+        else if (ch === 's') { drawFloorTile(x, y, col, row); drawPaStack(x, y); }
+        else if (ch === 'p') { drawFloorTile(x, y, col, row); drawPlanter(x, y); }
+        else if (ch === 'g') { drawFloorTile(x, y, col, row); drawGuitarStand(x, y, col, row); }
+        else if (ch === 'y') { drawFloorTile(x, y, col, row); drawKeyboard(x, y); }
+        else if (ch === 'k') { drawFloorTile(x, y, col, row); drawDrumTile(x, y, col, row); }
+        else if (ch === 'i') { drawFloorTile(x, y, col, row); drawMicStand(x, y); }
+        else if (ch === 'o') { drawFloorTile(x, y, col, row); drawStool(x, y); }
+        else if (ch === 'B') drawBackBar(x, y, col, row);
+        else if (ch === 'j') { drawFloorTile(x, y, col, row); drawJukebox(x, y); }
+        else if (ch === 'x') { drawFloorTile(x, y, col, row); drawCandelabra(x, y); }
+        else if (ch === 'f') drawFlyerWall(x, y, col, row);
+        else if (ch === 't') { drawFloorTile(x, y, col, row); drawToilet(x, y); }
+        else if (ch === 'w') { drawFloorTile(x, y, col, row); drawBasin(x, y); }
+        else if (ch === 'D') drawDoorTile(x, y, doorOpen());
+        else if (ch === 'G') drawGateTile(x, y, gatesOpen());
+        else drawFloorTile(x, y, col, row);
+      }
+    }
+  }
+
+  // velvet rope stanchion — draws a rope span to the next pole on the same run
+  function drawRopePole(x, y, col, row) {
+    if (tileAt(col + 1, row) === 'r') {
+      ctx.strokeStyle = '#8f1f3f';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 7);
+      ctx.quadraticCurveTo(x + TILE, y + 11, x + TILE + 8, y + 7);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#c9a227';
+    ctx.fillRect(x + 7, y + 5, 2, 9);
+    ctx.fillRect(x + 5, y + 13, 6, 2);
+    ctx.fillStyle = '#f2d97a';
+    ctx.beginPath();
+    ctx.arc(x + 8, y + 4, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // crowd-control barrier — angled slats between two posts
+  function drawBarricade(x, y) {
+    ctx.fillStyle = '#9aa5ac';
+    ctx.fillRect(x + 1, y + 4, 2, 11);
+    ctx.fillRect(x + TILE - 3, y + 4, 2, 11);
+    ctx.fillRect(x + 1, y + 5, TILE - 2, 2);
+    ctx.fillRect(x + 1, y + 11, TILE - 2, 2);
+    ctx.strokeStyle = '#6f7a82';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + 12); ctx.lineTo(x + TILE - 3, y + 6);
+    ctx.moveTo(x + TILE - 3, y + 12); ctx.lineTo(x + 2, y + 6);
+    ctx.stroke();
+  }
+
+  // PA / speaker stack — taller than an amp, two cones and a horn
+  function drawPaStack(x, y) {
+    ctx.fillStyle = '#100c1c';
+    ctx.fillRect(x + 1, y, TILE - 2, TILE);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1.5, y + 0.5, TILE - 3, TILE - 1);
+    ctx.fillStyle = '#4a4766';
+    ctx.beginPath(); ctx.arc(x + 8, y + 5, 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 8, y + 12, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#6f6a90';
+    ctx.fillRect(x + 5, y + 8, 6, 2);
+  }
+
+  // planter / potted palm for the patio and entrance
+  function drawPlanter(x, y) {
+    ctx.fillStyle = '#2f6b3a';
+    ctx.beginPath(); ctx.arc(x + 8, y + 5, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#47915a';
+    ctx.beginPath(); ctx.arc(x + 6, y + 4, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7a4a2a';
+    ctx.fillRect(x + 4, y + 9, 8, 6);
+    ctx.fillStyle = '#5c3620';
+    ctx.fillRect(x + 4, y + 9, 8, 2);
+  }
+
+  // ---------- backline and bar furniture: the props that tell the rooms apart ----------
+
+  // a guitar resting on an A-frame stand; body colour varies so a row isn't monotone
+  function drawGuitarStand(x, y, col, row) {
+    const finishes = ['#c0392b', '#2a4d7a', '#f0eef5', '#c9a227'];
+    ctx.strokeStyle = '#9aa5ac';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 15); ctx.lineTo(x + 8, y + 9); ctx.lineTo(x + 12, y + 15);
+    ctx.stroke();
+    drawStrungInstrument(x, y - 1, false, {
+      top: 1, neck: 5, upperY: 9, upperR: 2.6, lowerY: 12, lowerR: 3.2, hang: 0,
+      body: finishes[(col * 3 + row) % finishes.length],
+      hardware: '#d9c07a', pickups: [11, 13], bridge: 15,
+    }, 1);
+  }
+
+  // synth on an X-stand
+  function drawKeyboard(x, y) {
+    ctx.strokeStyle = '#9aa5ac';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + 15); ctx.lineTo(x + 13, y + 10);
+    ctx.moveTo(x + 13, y + 15); ctx.lineTo(x + 2, y + 10);
+    ctx.stroke();
+    ctx.fillStyle = '#171225';
+    ctx.fillRect(x, y + 4, TILE, 6);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.strokeRect(x + 0.5, y + 4.5, TILE - 1, 5);
+    ctx.fillStyle = '#f0eef5';
+    for (let i = 0; i < 7; i++) ctx.fillRect(x + 1 + i * 2, y + 7, 1, 3);
+    ctx.fillStyle = '#9ff0cb';
+    ctx.fillRect(x + 2, y + 5, 3, 1);
+  }
+
+  // one shell of the parked kit — three across and two down reads as a whole drum set
+  function drawDrumTile(x, y, col, row) {
+    const k = (col + row * 2) % 3;                 // kick / cymbal-over-tom / snare
+    const r = [7, 5, 6][k];
+    const shell = ['#5a1010', '#8a6a20', '#3a3f55'][k];
+    if (k === 1) {
+      ctx.strokeStyle = '#9aa5ac';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x + 8, y + 12); ctx.lineTo(x + 8, y + 3); ctx.stroke();
+      ctx.fillStyle = '#d9b64a';
+      ctx.beginPath(); ctx.ellipse(x + 8, y + 3, 6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#8a6a20';
+      ctx.stroke();
+    }
+    ctx.fillStyle = shell;
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 11, r, r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#efe9dc';
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 9, r, r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  function drawMicStand(x, y) {
+    ctx.fillStyle = '#9aa5ac';
+    ctx.fillRect(x + 7, y + 4, 2, 10);
+    ctx.fillRect(x + 4, y + 14, 8, 2);
+    ctx.fillStyle = '#171225';
+    ctx.fillRect(x + 6, y + 1, 4, 4);
+    ctx.fillStyle = '#6f6a90';
+    ctx.fillRect(x + 7, y + 2, 2, 2);
+  }
+
+  function drawStool(x, y) {
+    ctx.fillStyle = '#9aa5ac';                          // chrome legs and foot ring
+    ctx.fillRect(x + 5, y + 8, 2, 7);
+    ctx.fillRect(x + 9, y + 8, 2, 7);
+    ctx.fillRect(x + 4, y + 12, 8, 1);
+    ctx.fillStyle = '#171225';
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 8, 6, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7a1030';                          // cracked oxblood vinyl
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 6, 6, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath(); ctx.ellipse(x + 6, y + 5, 2.4, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawBackBar(x, y, col, row) {
+    ctx.fillStyle = '#171012';
+    ctx.fillRect(x, y, TILE, TILE);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+    const bottles = ['#7a2020', '#2a5c3a', '#5a3d8a', '#8a6a20', '#6a2a5a'];
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = bottles[(col * 3 + row + i) % bottles.length];
+      const bx = x + 2 + i * 5;
+      ctx.fillRect(bx, y + 6, 3, 8);
+      ctx.fillRect(bx + 1, y + 3, 1, 3);
+    }
+    ctx.fillStyle = '#c9a227';
+    ctx.fillRect(x, y + 14, TILE, 1);
+  }
+
+  function drawJukebox(x, y) {
+    ctx.fillStyle = '#2a1a2e';
+    ctx.fillRect(x + 1, y, TILE - 2, TILE);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1.5, y + 0.5, TILE - 3, TILE - 1);
+    ctx.globalAlpha = 0.5 + 0.4 * Math.sin(performance.now() / 300);
+    ctx.fillStyle = '#ff2c8c';
+    ctx.fillRect(x + 3, y + 2, TILE - 6, 4);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#c9a227';
+    ctx.fillRect(x + 3, y + 8, TILE - 6, 5);
+    ctx.fillStyle = '#171225';
+    ctx.fillRect(x + 6, y + 9, 4, 3);
+  }
+
+  function drawCandelabra(x, y) {
+    ctx.fillStyle = '#3a3752';
+    ctx.fillRect(x + 7, y + 8, 2, 7);
+    ctx.fillRect(x + 4, y + 14, 8, 2);
+    ctx.fillStyle = '#241a2e';
+    ctx.fillRect(x + 3, y + 6, 10, 2);
+    for (let i = 0; i < 3; i++) {
+      const cx = x + 4 + i * 4;
+      ctx.fillStyle = '#e8e2d0';
+      ctx.fillRect(cx, y + 3, 2, 3);
+      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 180 + i * 2);
+      ctx.fillStyle = '#feffa3';
+      ctx.fillRect(cx, y + 1, 2, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawToilet(x, y) {
+    ctx.fillStyle = '#e8edf0';                       // cistern
+    ctx.fillRect(x + 3, y + 1, 10, 5);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 3.5, y + 1.5, 9, 4);
+    ctx.fillStyle = '#9aa5ac';                       // flush handle
+    ctx.fillRect(x + 2, y + 2, 2, 1);
+    ctx.fillStyle = '#f4f8fa';                       // bowl
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 10, 5, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COLOR.outline;
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 10, 5, 4.5, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#9fb6c2';
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 10, 2.6, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawBasin(x, y) {
+    ctx.fillStyle = '#9aa5ac';                       // tap and spout
+    ctx.fillRect(x + 7, y + 2, 2, 3);
+    ctx.fillRect(x + 5, y + 2, 6, 1);
+    ctx.fillStyle = '#e8edf0';
+    ctx.fillRect(x + 1, y + 4, TILE - 2, 9);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1.5, y + 4.5, TILE - 3, 8);
+    ctx.fillStyle = '#b9ccd6';                       // the well
+    ctx.beginPath(); ctx.ellipse(x + 8, y + 9, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#6f7a82';                       // pedestal
+    ctx.fillRect(x + 6, y + 13, 4, 2);
+  }
+
+  // wall papered over with stapled show flyers — the dive bar's signature surface
+  function drawFlyerWall(x, y, col, row) {
+    drawWallTile(x, y, col, row);
+    const inks = ['#f0eef5', '#feffa3', '#ff2c8c', '#9ff0cb'];
+    for (let i = 0; i < 3; i++) {
+      const ox = (col * 7 + row * 13 + i * 5) % 9;
+      const oy = (col * 5 + row * 3 + i * 7) % 9;
+      ctx.fillStyle = inks[(col + row + i) % inks.length];
+      ctx.fillRect(x + 1 + ox, y + 1 + oy, 5, 6);
+      ctx.fillStyle = 'rgba(23,18,37,0.75)';
+      ctx.fillRect(x + 2 + ox, y + 3 + oy, 3, 1);
+      ctx.fillRect(x + 2 + ox, y + 5 + oy, 3, 1);
+    }
+  }
+
+  // security gate: heavy bars while a bouncer still stands, retracted once they're down
+  function drawGateTile(x, y, unlocked) {
+    drawFloorTile(x, y, Math.floor(x / TILE), Math.floor(y / TILE));
+    if (unlocked) {
+      // no bars, no jambs — anything spanning the tile reads as still blocked,
+      // whichever way you approach it. Just the mint "way through" pulse.
+      const pulse = 0.25 + 0.15 * Math.sin(performance.now() / 260);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#9ff0cb';
+      ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    ctx.fillStyle = '#5a1f1f';
+    ctx.fillRect(x, y, TILE, TILE);
+    ctx.fillStyle = '#9aa5ac';
+    for (let i = 0; i < 4; i++) ctx.fillRect(x + 2 + i * 4, y + 1, 2, TILE - 2);
+    ctx.fillRect(x, y + 6, TILE, 2);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+  }
+
+  function drawDoorTile(x, y, unlocked) {
+    dither(x, y, TILE, TILE, stage.theme.floorA, stage.theme.floorB, 4);
+    if (unlocked) {
+      const pulse = 0.5 + 0.3 * Math.sin(performance.now() / 200);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#9ff0cb';
+      ctx.fillRect(x + 2, y + 1, TILE - 4, TILE - 2);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = COLOR.outline;
+      for (let i = 0; i < 4; i++) ctx.fillRect(x + 2 + i * 3, y + 1, 1, TILE - 2);
+    }
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+  }
+
+  function drawFloorTile(x, y, col, row) {
+    const th = stage.theme;
+    dither(x, y, TILE, TILE, th.floorA, th.floorB, 4);
+    if ((col * 7 + row * 13) % 11 === 0) {
+      ctx.fillStyle = th.floorDust;
+      ctx.fillRect(x + 7, y + 7, 2, 2);
+    }
+  }
+
+  // brick coursing with mortar gaps, a bevel highlight, and a hard outline
+  function drawWallTile(x, y, col, row) {
+    const th = stage.theme;
+    ctx.fillStyle = th.wallMortar;
+    ctx.fillRect(x, y, TILE, TILE);
+    const brickH = 7;
+    for (let by = 0, r = 0; by < TILE; by += brickH + 1, r++) {
+      const rowOffset = (row + r + col) % 2 === 0 ? 0 : 4;
+      for (let bx = -4 + rowOffset; bx < TILE; bx += 8) {
+        // Clamp every brick to the tile. The course starts at -4 and a brick is 7
+        // wide, so an unclamped run painted up to 4px left and 3px right of the tile,
+        // over whatever sat beside it — which is the colour that was smearing into
+        // the gate alcoves, where a wall butts straight onto floor.
+        const x0 = Math.max(0, bx), x1 = Math.min(TILE, bx + 7);
+        if (x1 <= x0) continue;
+        ctx.fillStyle = th.wall;
+        ctx.fillRect(x + x0, y + by, x1 - x0, Math.min(brickH, TILE - by));
+      }
+    }
+    ctx.fillStyle = th.wallHighlight;
+    ctx.fillRect(x, y, TILE, 1);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+  }
+
+  function drawAmp(x, y) {
+    const th = stage.theme;
+    ctx.fillStyle = th.amp;
+    ctx.fillRect(x + 2, y + 1, TILE - 4, TILE - 3);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.strokeRect(x + 2.5, y + 1.5, TILE - 5, TILE - 4);
+    ctx.fillStyle = th.ampCone;
+    ctx.fillRect(x + 4, y + 4, TILE - 8, 3);
+    ctx.fillRect(x + 4, y + 9, TILE - 8, 3);
+  }
+
+  function drawCrateTile(x, y) {
+    const th = stage.theme;
+    dither(x, y, TILE, TILE, th.crate, th.crateDark, 4);
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+    ctx.beginPath();
+    ctx.moveTo(x + 1, y + 1); ctx.lineTo(x + TILE - 1, y + TILE - 1);
+    ctx.moveTo(x + TILE - 1, y + 1); ctx.lineTo(x + 1, y + TILE - 1);
+    ctx.stroke();
+  }
+
+  // table/counter surface — rim is derived from neighboring 'T' tiles, so it works at any size/position
+  function drawTableTile(col, row, x, y) {
+    const th = stage.theme;
+    dither(x, y, TILE, TILE, th.tableBlue, th.tableBlueAlt, 4);
+    ctx.strokeStyle = th.tableWhite;
+    ctx.lineWidth = 1;
+    const top = tileAt(col, row - 1) !== 'T';
+    const bottom = tileAt(col, row + 1) !== 'T';
+    const left = tileAt(col - 1, row) !== 'T';
+    const right = tileAt(col + 1, row) !== 'T';
+    const w = TILE - (left ? 1 : 0) - (right ? 1 : 0);
+    const h = TILE - (top ? 1 : 0) - (bottom ? 1 : 0);
+    ctx.strokeRect(x + (left ? 1 : -1), y + (top ? 1 : -1), w, h);
+  }
+
+  // one signature decoration per venue, placed on tiles the layout keeps clear
+  function drawLandmark() {
+    const name = stage.themeName;
+    if (name === 'bathroom') {
+      const x = 4 * TILE, y = 3 * TILE;           // mirror above the sink run
+      ctx.fillStyle = '#eaf6fb';
+      ctx.fillRect(x, y + 2, TILE * 8, 9);
+      ctx.strokeStyle = COLOR.outline;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 2.5, TILE * 8 - 1, 8);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      for (let i = 0; i < 4; i++) ctx.fillRect(x + 6 + i * 30, y + 4, 8, 5);
+    } else if (name === 'bar') {
+      // dying neon over the back bar: a tube outline with an arrow, dropping out
+      const x = 8 * TILE, y = 3 * TILE - 2, w = 88, h = 14;   // clear of the objective banner
+      const t = performance.now();
+      const dropout = Math.floor(t / 60) % 29 < 1;
+      ctx.globalAlpha = dropout ? 0.12 : 0.55 + 0.3 * Math.sin(t / 210);
+      ctx.strokeStyle = '#ff2c8c';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+      ctx.strokeStyle = '#9ff0cb';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 16, y + 4); ctx.lineTo(x + 16, y + 11);
+      ctx.moveTo(x + 12, y + 7); ctx.lineTo(x + 16, y + 11); ctx.lineTo(x + 20, y + 7);
+      ctx.moveTo(x + 30, y + 7); ctx.lineTo(x + w - 14, y + 7);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (name === 'kitchen') {
+      const x = 33 * TILE, y = 10 * TILE;         // range with burners
+      ctx.fillStyle = '#3a3f45';
+      ctx.fillRect(x, y, TILE * 2, TILE * 2);
+      ctx.fillStyle = '#d1453a';
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc(x + 8 + (i % 2) * 16, y + 9 + Math.floor(i / 2) * 15, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (name === 'backroom') {
+      const x = 4 * TILE, y = 2 * TILE + 2, w = TILE * 7, h = 13;   // bulb-lit makeup mirror
+      ctx.fillStyle = '#2a2540';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = COLOR.outline;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.fillRect(x + 4, y + 3, w - 32, h - 6);
+      const t = performance.now();
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = (Math.floor(t / 420 + i) % 7 !== 0) ? '#feffa3' : '#6b6350';
+        ctx.beginPath(); ctx.arc(x + 6 + i * 14, y - 3, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#f0eef5';                                  // setlist taped up beside it
+      ctx.fillRect(x + w + 8, y - 1, 9, 14);
+      ctx.fillStyle = '#56507e';
+      for (let i = 0; i < 4; i++) ctx.fillRect(x + w + 10, y + 2 + i * 3, 5, 1);
+    } else if (name === 'patio') {
+      ctx.strokeStyle = 'rgba(20,14,30,0.5)';     // string lights swagged along the top
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(TILE, TILE * 2);
+      ctx.quadraticCurveTo(MAP_W / 2, TILE * 2 + 12, MAP_W - TILE, TILE * 2);
+      ctx.stroke();
+      for (let i = 0; i <= 14; i++) {
+        const p = i / 14;
+        const lx = TILE + p * (MAP_W - TILE * 2);
+        const ly = TILE * 2 + Math.sin(Math.PI * p) * 9;
+        ctx.fillStyle = (i % 2 === 0) ? '#feffa3' : '#9ff0cb';
+        ctx.beginPath(); ctx.arc(lx, ly, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (name === 'entrance') {
+      const x = 4 * TILE, y = 2 * TILE;           // marquee over the box office
+      ctx.fillStyle = '#1c1730';
+      ctx.fillRect(x, y, TILE * 8, 12);
+      ctx.fillStyle = (Math.floor(performance.now() / 300) % 2 === 0) ? '#feffa3' : '#e8734a';
+      for (let i = 0; i < 10; i++) ctx.fillRect(x + 5 + i * 12, y + 3, 4, 4);
+    }
+  }
+
+  // ---------- pixel-art sprite: Sebastian (vocals/guitar) — boxy FF-style chibi, glasses framing the eyes, slim torso ----------
+  const SPRITE_PALETTE = {
+    o: '#171225', // outline / glasses frame / shoes
+    H: '#6b4a35', // hair base (lighter warm brown)
+    J: '#8f6a4a', // hair highlight streak
+    f: '#e3ab7d', // skin
+    d: '#c68f5c', // skin shadow
+    m: '#4a3326', // mustache
+    l: '#a8c8e8', // glasses lens tint
+    e: '#171225', // eye pupil (seen through the lens)
+    w: '#f0eef5', // shirt (white tee)
+    y: '#cfc9dc', // shirt shadow
+    a: '#9ff0cb', // shirt print accent (band mint)
+    p: '#332b52', // jeans
+    b: '#171225', // shoes
+  };
+  // Mike (guitar/synth) — short hair, opaque sunglasses, own geometry (shares Sebastian's torso/legs)
+  const MIKE_PALETTE = {
+    o: '#171225', H: '#2b2b2b', J: '#454545', f: '#e3ab7d', d: '#c68f5c',
+    m: '#e3ab7d', w: '#cfe4ff', y: '#aac3e6', a: '#feffa3', p: '#332b52', b: '#171225',
+  };
+
+  // build a fixed-width row from alternating [char, count] pairs — safer than hand-counted strings
+  function seg(...pairs) {
+    let s = '';
+    for (let i = 0; i < pairs.length; i += 2) s += pairs[i].repeat(pairs[i + 1]);
+    return s;
+  }
+
+  const HEAD_FRONT = [
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'f', 8, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'o', 3, 'f', 2, 'o', 3, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'l', 1, 'e', 1, 'l', 1, 'f', 2, 'l', 1, 'e', 1, 'l', 1, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'o', 3, 'f', 2, 'o', 3, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'f', 3, 'd', 2, 'f', 3, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'f', 2, 'm', 4, 'f', 2, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'f', 8, 'H', 2, '.', 2),
+    seg('H', 5, 'f', 6, 'H', 5),
+    seg('H', 4, 'w', 8, 'H', 4),
+  ];
+  const HEAD_BACK = [
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('H', 5, 'f', 6, 'H', 5),
+    seg('H', 4, 'w', 8, 'H', 4),
+  ];
+  // slim torso with a seam line separating each arm from the main body
+  const TORSO = [
+    seg('H', 4, 'w', 8, 'H', 4),
+    seg('.', 2, 'w', 2, 'o', 1, 'w', 6, 'o', 1, 'w', 2, '.', 2),
+    seg('.', 2, 'w', 2, 'o', 1, 'w', 2, 'a', 2, 'w', 2, 'o', 1, 'w', 2, '.', 2),
+    seg('.', 2, 'w', 2, 'o', 1, 'y', 1, 'w', 4, 'y', 1, 'o', 1, 'w', 2, '.', 2),
+    seg('.', 3, 'o', 2, 'p', 6, 'o', 2, '.', 3),
+  ];
+  const LEGS_A = [
+    seg('.', 4, 'o', 1, 'p', 6, 'o', 1, '.', 4),
+    seg('.', 5, 'o', 1, 'p', 4, 'o', 1, '.', 5),
+    seg('.', 5, 'o', 1, 'b', 4, 'o', 1, '.', 5),
+  ];
+  const LEGS_B = [
+    seg('.', 3, 'o', 1, 'p', 2, '.', 3, 'p', 2, 'o', 1, '.', 4),
+    seg('.', 4, 'o', 1, 'p', 1, '.', 3, 'p', 1, 'o', 1, '.', 5),
+    seg('.', 4, 'b', 2, '.', 4, 'b', 2, '.', 4),
+  ];
+
+  const SIDE_HEAD = [
+    seg('.', 4, 'H', 8, '.', 4),
+    seg('.', 4, 'H', 2, 'J', 4, 'H', 2, '.', 4),
+    seg('.', 3, 'H', 4, 'f', 5, 'H', 1, '.', 3),
+    seg('.', 3, 'H', 4, 'f', 1, 'o', 3, 'f', 1, 'H', 1, '.', 3),
+    seg('.', 3, 'H', 4, 'f', 1, 'l', 1, 'e', 1, 'l', 1, 'f', 1, 'H', 1, '.', 3),
+    seg('.', 3, 'H', 4, 'f', 1, 'o', 3, 'f', 1, 'H', 1, '.', 3),
+    seg('.', 3, 'H', 4, 'f', 6, '.', 3),
+    seg('.', 3, 'H', 4, 'f', 2, 'm', 3, '.', 4),
+    seg('.', 3, 'H', 4, 'f', 5, '.', 4),
+    seg('.', 2, 'H', 5, 'f', 4, '.', 5),
+    seg('H', 4, 'w', 7, '.', 5),
+  ];
+  const SIDE_TORSO = [
+    seg('H', 3, 'w', 7, '.', 6),
+    seg('.', 1, 'o', 1, 'w', 2, 'o', 1, 'w', 5, '.', 6),
+    seg('.', 1, 'o', 1, 'w', 2, 'o', 1, 'w', 1, 'a', 2, 'w', 2, '.', 6),
+    seg('.', 1, 'o', 1, 'w', 2, 'o', 1, 'y', 1, 'w', 2, 'y', 1, '.', 7),
+    seg('.', 3, 'o', 1, 'p', 5, '.', 7),
+  ];
+  const SIDE_LEGS_A = [
+    seg('.', 4, 'o', 1, 'p', 4, '.', 7),
+    seg('.', 4, 'o', 1, 'p', 3, '.', 8),
+    seg('.', 4, 'o', 1, 'b', 3, '.', 8),
+  ];
+  const SIDE_LEGS_B = [
+    seg('.', 3, 'o', 1, 'p', 5, '.', 7),
+    seg('.', 3, 'o', 1, 'p', 2, '.', 2, 'p', 1, '.', 7),
+    seg('.', 3, 'b', 2, '.', 3, 'b', 1, '.', 7),
+  ];
+
+  const PLAYER_SPRITES = {
+    down: [[...HEAD_FRONT, ...TORSO, ...LEGS_A], [...HEAD_FRONT, ...TORSO, ...LEGS_B]],
+    up:   [[...HEAD_BACK,  ...TORSO, ...LEGS_A], [...HEAD_BACK,  ...TORSO, ...LEGS_B]],
+    side: [[...SIDE_HEAD,  ...SIDE_TORSO, ...SIDE_LEGS_A], [...SIDE_HEAD, ...SIDE_TORSO, ...SIDE_LEGS_B]],
+  };
+
+  // Mike — short hair, opaque sunglasses band (no visible eyes), shares Sebastian's torso/legs via MIKE_PALETTE
+  const MIKE_HEAD_FRONT = [
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
+    seg('.', 2, 'H', 2, 'f', 8, 'H', 2, '.', 2),
+    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
+    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
+    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
+    seg('.', 4, 'f', 8, '.', 4),
+    seg('.', 4, 'f', 8, '.', 4),
+    seg('.', 4, 'f', 8, '.', 4),
+    seg('.', 5, 'f', 6, '.', 5),
+    seg('.', 3, 'w', 10, '.', 3),
+  ];
+  const MIKE_HEAD_BACK = [
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 3, 'H', 10, '.', 3),
+    seg('.', 4, 'H', 8, '.', 4),
+    seg('.', 5, 'f', 6, '.', 5),
+    seg('.', 3, 'w', 10, '.', 3),
+  ];
+  const MIKE_SIDE_HEAD = [
+    seg('.', 4, 'H', 8, '.', 4),
+    seg('.', 4, 'H', 2, 'J', 4, 'H', 2, '.', 4),
+    seg('.', 3, 'H', 3, 'f', 7, '.', 3),
+    seg('.', 3, 'H', 2, 'f', 3, 'o', 3, '.', 5),
+    seg('.', 3, 'H', 1, 'f', 4, 'o', 3, '.', 5),
+    seg('.', 3, 'H', 2, 'f', 3, 'o', 3, '.', 5),
+    seg('.', 3, 'H', 2, 'f', 7, '.', 4),
+    seg('.', 3, 'H', 2, 'f', 6, '.', 5),
+    seg('.', 3, 'H', 2, 'f', 6, '.', 5),
+    seg('.', 2, 'H', 3, 'f', 6, '.', 5),
+    seg('H', 3, 'w', 8, '.', 5),
+  ];
+  const MIKE_SPRITES = {
+    down: [...MIKE_HEAD_FRONT, ...TORSO, ...LEGS_A],
+    up:   [...MIKE_HEAD_BACK,  ...TORSO, ...LEGS_A],
+    side: [...MIKE_SIDE_HEAD,  ...SIDE_TORSO, ...SIDE_LEGS_A],
+  };
+
+  // Mel (bass) — big curly hair, round glasses, patterned top; only needed standing for the finale scene
+  const MEL_PALETTE = {
+    o: '#171225', H: '#241a2e', J: '#3d2d42', f: '#e3ab7d', d: '#c68f5c',
+    l: '#a8c8e8', e: '#171225', w: '#5a7bc4', y: '#3f5a94', a: '#cfe4ff', p: '#9aa5c9', b: '#171225',
+  };
+  // A narrow face inside a lot of hair: the jaw tapers from four pixels to two over
+  // the last three rows, and the round glasses sit a pixel proud of the cheeks on
+  // each side. An eight-wide face read as a much heavier person than Mel is.
+  const MEL_HEAD_FRONT = [
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 3, 'J', 2, 'H', 4, 'J', 2, 'H', 3, '.', 1),
+    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
+    seg('.', 1, 'H', 4, 'o', 1, 'f', 4, 'o', 1, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'l', 1, 'e', 1, 'f', 2, 'e', 1, 'l', 1, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'o', 1, 'f', 4, 'o', 1, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
+    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
+    seg('.', 1, 'H', 6, 'f', 2, 'H', 6, '.', 1),
+    seg('H', 7, 'f', 2, 'H', 7),
+    seg('H', 3, 'w', 10, 'H', 3),
+  ];
+  const MEL_HEAD_BACK = [
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 3, 'J', 2, 'H', 4, 'J', 2, 'H', 3, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('.', 1, 'H', 14, '.', 1),
+    seg('H', 6, 'f', 4, 'H', 6),
+    seg('H', 3, 'w', 10, 'H', 3),
+  ];
+  const MEL_SIDE_HEAD = [
+    seg('.', 2, 'H', 10, '.', 4),
+    seg('.', 2, 'H', 2, 'J', 4, 'H', 4, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 4, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 1, 'o', 2, 'f', 1, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 1, 'l', 1, 'e', 1, 'l', 1, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 1, 'o', 2, 'f', 1, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 5, '.', 4),
+    seg('.', 1, 'H', 6, 'f', 4, '.', 5),
+    seg('.', 1, 'H', 6, 'f', 4, '.', 5),
+    seg('.', 1, 'H', 5, 'f', 4, '.', 6),
+    seg('H', 4, 'w', 7, '.', 5),
+  ];
+  const MEL_SPRITE = [...MEL_HEAD_FRONT, ...TORSO, ...LEGS_A];
+  const MEL_SPRITES = {
+    down: MEL_SPRITE,
+    up:   [...MEL_HEAD_BACK, ...TORSO, ...LEGS_A],
+    side: [...MEL_SIDE_HEAD, ...SIDE_TORSO, ...SIDE_LEGS_A],
+  };
+
+  function drawSprite(grid, dx, dy, flip, palette = SPRITE_PALETTE) {
+    const w = grid[0].length;
+    for (let row = 0; row < grid.length; row++) {
+      const line = grid[row];
+      for (let col = 0; col < w; col++) {
+        const ch = line[col];
+        if (!ch || ch === '.') continue;
+        ctx.fillStyle = palette[ch];
+        const cx = flip ? (w - 1 - col) : col;
+        ctx.fillRect(dx + cx, dy + row, 1, 1);
+      }
+    }
+  }
+
+  // Scales a pixel sprite without blurring, via an offscreen buffer. Used only by the
+  // finale, where the band stands at the drummer's scale rather than field size.
+  const spriteBuf = document.createElement('canvas');
+  function drawSpriteScaled(grid, dx, dy, flip, palette, scale) {
+    const w = grid[0].length, h = grid.length;
+    spriteBuf.width = w;
+    spriteBuf.height = h;
+    const sctx = spriteBuf.getContext('2d');
+    sctx.clearRect(0, 0, w, h);
+    for (let row = 0; row < h; row++) {
+      const line = grid[row];
+      for (let col = 0; col < w; col++) {
+        const ch = line[col];
+        if (!ch || ch === '.') continue;
+        sctx.fillStyle = palette[ch];
+        sctx.fillRect(flip ? (w - 1 - col) : col, row, 1, 1);
+      }
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(spriteBuf, Math.round(dx), Math.round(dy), Math.round(w * scale), Math.round(h * scale));
+  }
+
+  // ---------- item icons (8x8) ----------
+  const ITEM_LABEL = { strings: 'STRINGS', cable: 'CABLE', pedal: 'PEDAL', pick: 'PICK', mic: 'MIC', guitar: 'GUITAR' };
+  // The cable's plate is warm on purpose. Its icon and its swing are drawn black, so
+  // the plate has to be bright to carry them — and yellow against the bathroom's cold
+  // blue is the only pairing here that reads from across the room.
+  const ITEM_COLOR = { strings: '#cfe4ff', cable: '#feffa3', pedal: '#f2c14e', pick: '#9ff0cb', mic: '#eecbff', guitar: '#d7a6f5' };
+  const ITEM_SHAPES = {
+    // stompbox: metal case, two knobs, and a silver footswitch
+    pedal: [
+      seg('.', 2, 'o', 4, '.', 2),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'k', 1, 'i', 2, 'k', 1, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'i', 1, 'n', 2, 'i', 1, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 6, '.', 1),
+      seg('.', 8),
+    ],
+    // 1/4" instrument cable: silver plug trailing into a black rubber cord. The cord
+    // is drawn black ('b') with a bright rim ('w') down one side, so it holds its
+    // shape on a dark backroom floor and on pale bathroom tile alike.
+    cable: [
+      seg('.', 2, 'n', 2, '.', 4),
+      seg('.', 2, 'w', 1, 'b', 1, '.', 4),
+      seg('.', 2, 'w', 1, 'b', 1, '.', 4),
+      seg('.', 1, 'w', 1, 'b', 3, '.', 3),
+      seg('.', 3, 'b', 1, 'w', 1, '.', 3),
+      seg('.', 2, 'b', 2, 'w', 1, '.', 3),
+      seg('.', 1, 'w', 1, 'b', 1, '.', 5),
+      seg('w', 1, 'b', 1, '.', 6),
+    ],
+    // fresh string pack: labeled envelope with coiled strings visible inside
+    strings: [
+      seg('.', 1, 'o', 6, '.', 1),
+      seg('.', 1, 'o', 1, 'n', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, '.', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 1, '.', 4, 'o', 1, '.', 1),
+      seg('.', 1, 'o', 6, '.', 1),
+      seg('.', 8),
+    ],
+    // guitar pick with a glossy highlight streak
+    pick: [
+      seg('.', 2, 'i', 4, '.', 2),
+      seg('.', 1, 'i', 6, '.', 1),
+      seg('i', 3, 'n', 2, 'i', 3),
+      seg('i', 8),
+      seg('.', 1, 'i', 6, '.', 1),
+      seg('.', 2, 'i', 4, '.', 2),
+      seg('.', 3, 'i', 2, '.', 3),
+      seg('.', 3, 'i', 2, '.', 3),
+    ],
+    // mic capsule with a grille highlight over a stand
+    mic: [
+      seg('.', 2, 'o', 4, '.', 2),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('o', 1, 'i', 2, 'n', 2, 'i', 2, 'o', 1),
+      seg('o', 1, 'i', 6, 'o', 1),
+      seg('.', 1, 'o', 1, 'i', 4, 'o', 1, '.', 1),
+      seg('.', 2, 'o', 4, '.', 2),
+      seg('.', 3, 'o', 2, '.', 3),
+      seg('.', 3, 'o', 2, '.', 3),
+    ],
+    // headstock + fretted neck leading into a rounded body with a sound hole
+    guitar: [
+      seg('.', 3, 'i', 2, '.', 3),
+      seg('.', 3, 'k', 2, '.', 3),
+      seg('.', 3, 'i', 2, '.', 3),
+      seg('.', 3, 'k', 2, '.', 3),
+      seg('.', 2, 'o', 4, '.', 2),
+      seg('o', 1, 'i', 2, 'n', 2, 'i', 2, 'o', 1),
+      seg('o', 1, 'i', 6, 'o', 1),
+      seg('.', 1, 'o', 6, '.', 1),
+    ],
+  };
+  // 'i' takes the item's tint, 'o' the world outline; the rest are fixed so an icon
+  // can force its own contrast — 'b' black and 'w' a bright rim, which is how the
+  // cable stays readable whatever the floor under it is doing.
+  function drawIcon(shapeRows, x, y, fillColor) {
+    const detail = { k: '#171225', n: '#f0eef5', b: '#0d0b14', w: '#e8edf0' };
+    for (let row = 0; row < shapeRows.length; row++) {
+      const line = shapeRows[row];
+      for (let col = 0; col < line.length; col++) {
+        const ch = line[col];
+        if (ch === '.') continue;
+        ctx.fillStyle = ch === 'o' ? COLOR.outline : (detail[ch] || fillColor);
+        ctx.fillRect(x + col, y + row, 1, 1);
+      }
+    }
+  }
+  // The gear is the whole point of the room, so it hovers, throws a halo well past its
+  // own tile, and wears an arrow. The arrow sits on the item itself — it is not the
+  // off-screen chevron that used to lead you to it.
+  function drawItemPickup(now) {
+    if (stage.collected) return;
+    const cx = stage.itemCol * TILE + TILE / 2;
+    const cy = stage.itemRow * TILE + TILE / 2;
+    const tint = ITEM_COLOR[stage.item];
+    const pulse = 0.5 + 0.5 * Math.sin(now / 260);
+    const bob = Math.sin(now / 380) * 3;
+
+    for (let i = 3; i >= 1; i--) {          // halo, brightest at the core
+      ctx.globalAlpha = (0.09 + 0.05 * pulse) * (i / 3);
+      ctx.fillStyle = tint;
+      ctx.beginPath();
+      ctx.arc(cx, cy + bob, 7 + i * 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.25;                 // shadow, so the hover reads as a hover
+    ctx.fillStyle = COLOR.outline;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 7, 5 - bob * 0.3, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.55 + 0.35 * pulse;
+    ctx.fillStyle = tint;
+    ctx.fillRect(cx - 7, cy - 7 + bob, TILE - 2, TILE - 2);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = COLOR.outline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - 7.5, cy - 7.5 + bob, TILE - 1, TILE - 1);
+    drawIcon(ITEM_SHAPES[stage.item], Math.round(cx - 4), Math.round(cy - 4 + bob), tint);
+    drawHoverArrow(Math.round(cx), Math.round(cy - 8 + bob), tint);
+  }
+
+  // ---------- venue hostiles: enforcers, bouncers, fans, plus loose pucks ----------
+  const ENEMY_PALETTE = {
+    k: '#0d0b14', D: '#332b52', M: '#7a8894', W: '#e8edf0', R: '#ff2020',
+    J: '#2a4d7a', N: '#f0eef5', S: '#e3ab7d', B: '#1a1a1a', H: '#2a1f2e',
+    T: '#9ff0cb', L: '#5a5f7a', C: '#c9a227',
+    X: '#f2c14e',   // hi-vis SECURITY sash
+    Z: '#d1453a',   // radio light
+    O: '#3a5f8a',   // attendant's coveralls
+    G: '#2a5c3a',   // bottle green
+    F: '#e8734a',   // flame
+    U: '#e8e2d0',   // chef whites
+    Q: '#2a2a33',   // dark apron
+    P: '#d1453a',   // puck body red
+    A: '#6b4a2f',   // drummer cap
+    E: '#241a18',   // drummer beard
+    V: '#4a5a6e',   // drummer slate tee
+    Y: '#d9b98a',   // drumstick wood
+  };
+  const ENEMY_HP = { puck: 1, fan: 1, hockey: 3, bouncer: 4 };
+  const ENEMY_SIZE = {
+    puck:    { w: 10, h: 10 },
+    fan:     { w: 11, h: 18 },
+    hockey:  { w: 12, h: 18 },
+    bouncer: { w: 14, h: 18 },
+  };
+  const ENEMY_SPEED = { puck: 34, fan: 30, hockey: 22, bouncer: 14 };
+  // rows are literal pixel strings — one char per pixel, keyed to ENEMY_PALETTE
+  const ENEMY_SHAPES = {
+    // solid red disc read as a plain outlined circle
+    puck: [
+      "...kkkk...",
+      ".kkPPPPkk.",
+      ".kPPPPPPk.",
+      "kPPPPPPPPk",
+      "kPPPPPPPPk",
+      "kPPPPPPPPk",
+      "kPPPPPPPPk",
+      ".kPPPPPPk.",
+      ".kkPPPPkk.",
+      "...kkkk...",
+    ],
+    // enforcer: caged helmet, glowing eyes, numbered jersey, skates
+    hockey: [
+      "....kkkk....",
+      "..kkDDDDkk..",
+      ".kDMMMMMMDk.",
+      ".kDMWWWWMDk.",
+      ".kDMRRMMRRDk",
+      ".kDMMMMMMDk.",
+      "..kDDDDDDk..",
+      "...kkJJkk...",
+      "..kJJJJJJk..",
+      ".kJJJJJJJJk.",
+      "kJJJWWWWJJJk",
+      "kJJJJJJJJJJk",
+      "kJJJJNNJJJJk",
+      ".kJJJJJJJJk.",
+      "..kDDDDDDk..",
+      "..kDDDDDDk..",
+      "..kkk..kkk..",
+      "..kkk..kkk..",
+    ],
+    // bouncer: shades, earpiece, arms folded across a black tee
+    bouncer: [
+      ".....kkkk.....",
+      "....kDDDDk....",
+      "...kDSSSSDk...",
+      "...kSSSSSSk...",
+      "..kkkkSSkkkk..",
+      "..kkWkSSkWkk..",
+      "....kSSSSk.W..",
+      "..kkkBBBBkkk..",
+      ".kBBBBBBBBBBk.",
+      "kBBBBBBBBBBBBk",
+      "kBBBBBBBBkSSSk",
+      "kBBBBBBBkSSSSS",
+      "kBBBBBBBkSSSSS",
+      ".kBBBBBBBkSSSk",
+      "..kDDDDDDDDk..",
+      "..kDDDDDDDDk..",
+      "..kkk....kkk..",
+      "..kkk....kkk..",
+    ],
+    // fan: mouth open, band 'a' on the tee, a pen in one fist and a sheet to sign
+    // in the other. The 11px body still lines up with the hitbox; the paper simply
+    // overhangs it to the right.
+    fan: [
+      "Mk.......kkkkk",
+      "Mk..kkk..kNNNN",
+      "Mk.kHHHk.kNMMN",
+      "CkkkSSSkkkNNNN",
+      "..kSkSkSk.NMMN",
+      "..kSSSSSk.kkkk",
+      "..kSkkkSk.....",
+      "...kSSSk......",
+      ".kTTTkkTTk....",
+      ".kTTTTTkTk....",
+      ".kTTTkkkTk....",
+      ".kTTkTTkTk....",
+      ".kTTTkkkTk....",
+      "..kTTTTTk.....",
+      "..kDDDDDk.....",
+      "..kDDDDDk.....",
+      "..kk...kk.....",
+      "..kk...kk.....",
+    ],
+  };
+  // ---------- the wild drummer: optional boss, tamed rather than killed ----------
+  // cap + shades + heavy beard + slate tee, scaled up and roughed out into a boss
+  const DRUMMER_SHAPE = [
+    "Y...AAAAAAAA...Y",
+    ".Y..AAAAAAAA..Y.",
+    "..Y.AAAAAAAA.Y..",
+    "...CCCCCCCCCC...",
+    "....SSSSSSSS....",
+    "...kkkkkkkkkk...",
+    "...kkWkkkkWkk...",
+    "....SSSSSSSS....",
+    "....SEEEEEES....",
+    ".....SSSSSS.....",
+    "......SSSS......",
+    "..SS.VVVVVV.SS..",
+    ".SS..VVVVVV..SS.",
+    ".S..VVVVVVVV..S.",
+    "...VVVVVVVVVV...",
+    "...VVVNNNNVVV...",
+    "...VVDNNNNDVV...",
+    "....VDDDDDDV....",
+    "....DDD..DDD....",
+    "...kkkk..kkkk...",
+  ];
+  // ---------- the chief of security: buzz cut, wraparound shades, coiled earpiece,
+  // hi-vis SECURITY sash over a black bomber, radio on the belt ----------
+  const SECURITY_SHAPE = [
+    "......kkkkkkkk......",
+    ".....kHHHHHHHHk.....",
+    "....kHHHHHHHHHHk....",
+    "....kSSSSSSSSSSk....",
+    "....kkkkkkkkkkkk.MM.",
+    "....kWkkkkkkkWkk.MM.",
+    "....kSSSSSSSSSSkkMM.",
+    "....kSSSkkkkSSSkkM..",
+    ".....kSSSSSSSSk..M..",
+    ".....kkSSSSSSkk..M..",
+    "...kkkBBBBBBBBkkkM..",
+    "..kBBBBBBBBBBBBBBk..",
+    ".kBBBBBBBBBBBBBBBBk.",
+    "kMBBBBBBBBBBBBBBBBBk",
+    "kMBBXXXXXXXXXXXXBBBk",
+    "kMBBXXXXXXXXXXXXBBZk",
+    "kXBBBBBBBBBBBBBBBBBk",
+    ".kBBBBBBBBBBBBBBBBk.",
+    "..kBBBBBBBBBBBBBBk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDk..kDDDDDk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+
+  // ---------- the room elites: one per venue, each escalating on the last ----------
+  const DOORMAN_SHAPE = [
+    "......kkkkkkkk......",
+    ".....kHHHHHHHHk.....",
+    "....kHHHHHHHHHHk....",
+    "....kSSSSSSSSSSk....",
+    "....kkkkkkkkkkkkMM..",
+    "....kWkkkkkkkkWkMM..",
+    "....kSSSSSSSSSSkMM..",
+    "....kSSkkkkkkSSkM...",
+    ".....kSSSSSSSSk.M...",
+    ".....kkSSSSSSkk.M...",
+    "...kkkBBBBBBBBkkk...",
+    "..kBBBBBBBBBBBBBBk..",
+    ".kBBBBBBBBBBBBBBBBk.",
+    "kCCCBBBBBBBBBBBBkNNk",
+    "kCBBBBBBBBBBBBBBkNNk",
+    "kCBBBBBBBBBBBBBBkNNk",
+    "kCCCBBBBBBBBBBBBkkkk",
+    ".kBBBBBBBBBBBBBBBBk.",
+    "..kBBBBBBBBBBBBBBk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDD..DDDDDDk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+  const ATTENDANT_SHAPE = [
+    "......kkkkkkkk......",
+    ".....kHHHHHHHHk.....",
+    "NNN.kHHHHHHHHHHk....",
+    "NNN.kSSSSSSSSSSk....",
+    "NkN.kSSkkSSkkSSk....",
+    ".Y..kSSWkSSWkSSk....",
+    ".Y..kSSSSSSSSSSk....",
+    ".Y..kSSkkkkkkSSk....",
+    ".Y...kSSSSSSSSk.....",
+    ".Y...kkSSSSSSkk.....",
+    ".Y.kkkOOOOOOOOkkk...",
+    ".YkOOOOOOOOOOOOOOk..",
+    ".YOOOOOOOOOOOOOOOOk.",
+    "kOOOOOOOOOOOOOOCCCCk",
+    "kOOONNNNNNNNNNNCCCCk",
+    "kOOOOOOOOOOOOOOOOOOk",
+    "kOOOOOOOOOOOOOOOOOOk",
+    ".kOOOOOOOOOOOOOOOOk.",
+    "..kOOOOOOOOOOOOOOk..",
+    "..kOOOOOOOOOOOOOOk..",
+    "..kOOOOOOOOOOOOOOk..",
+    "..kOOOOOO..OOOOOOk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+  const BARTENDER_SHAPE = [
+    "......kkkkkkkk......",
+    ".....kHHHHHHHHk.....",
+    "....kHHHHHHHHHHk....",
+    "....kSSSSSSSSSSk....",
+    "....kSSkkSSkkSSk....",
+    "....kSSWkSSWkSSk....",
+    "....kSSSSSSSSSSk....",
+    "....kSEEEEEEEESk....",
+    ".....kSSSSSSSSk.....",
+    ".....kkSSSSSSkk.....",
+    "...kkkBBBBBBBBkkkGk.",
+    "..kBBBBBBBBBBBBBkGk.",
+    ".CCBBBBBBBBBBBBBkGk.",
+    "kCCBBNNNNNNNNNNBkkkk",
+    "kBBBBNNNNNNNNNNBBBBk",
+    "kBBBBNNNNNNNNNNBBBBk",
+    "kBBBBBNNNNNNNNBBBBBk",
+    ".kBBBBBBBBBBBBBBBBk.",
+    "..kBBBBBBBBBBBBBBk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDD..DDDDDDk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+  const COOK_SHAPE = [
+    ".....NNNNNNNNNN.....",
+    ".....NkNNNNNNkN.....",
+    "....kNNNNNNNNNNk....",
+    "....kSSSSSSSSSSk....",
+    "....kSSkkSSkkSSk....",
+    "....kSSWkSSWkSSk....",
+    "....kSSSSSSSSSSk....",
+    "....kSEEEEEEEESk....",
+    ".....kSSSSSSSSk.....",
+    ".....kkSSSSSSkk.....",
+    "...kkkUUUUUUUUkkkFF.",
+    "..kUUUUUUUUUUUUUMMMM",
+    ".kUUUUUUUUUUUUUUkMMk",
+    "kUUUUQQQQQQQQQQUUUUk",
+    "kUUUUQQQQQQQQQQUUUUk",
+    "kUUUUQQQQQQQQQQUUUUk",
+    "kUUUUUUUUUUUUUUUUUUk",
+    ".kUUUUUUUUUUUUUUUUk.",
+    "..kUUUUUUUUUUUUUUk..",
+    "..kQQQQQQQQQQQQQQk..",
+    "..kQQQQQQQQQQQQQQk..",
+    "..kQQQQQQ..QQQQQQk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+  const ROADIE_SHAPE = [
+    "......kkkkkkkk......",
+    ".....kTTTTTTTTk.....",
+    "....kTTTTTTTTTTk....",
+    "....kSSSSSSSSSSk....",
+    "....kSSkkSSkkSSk....",
+    "....kSSWkSSWkSSk....",
+    "....kSSSSSSSSSSk....",
+    "....kSEEEEEEEESk....",
+    ".....kSSSSSSSSk.....",
+    ".....kkSSSSSSkk.....",
+    "...kkkVVVVVVVVkkk...",
+    "..kVVVVVVVVVVVVVYYY.",
+    "kTTkVVVVVVVVVVVVkkk.",
+    "TVVTVVVVVVVVVVVVVVVk",
+    "TVVTVVNNNNNNNNVVVVVk",
+    "kTTkVVVVVVVVVVVVVVVk",
+    "kVVVVVVVVVVVVVVVVVVk",
+    ".kVVVVVVVVVVVVVVVVk.",
+    "..kVVVVVVVVVVVVVVk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDDDDDDDDDDk..",
+    "..kDDDDDD..DDDDDDk..",
+    "..kkkkkkk..kkkkkkk..",
+    "..kkkkkkk..kkkkkkk..",
+  ];
+
+  // Every elite runs one state machine — wander, charge you down, then plant and
+  // unload a signature special. Only the special differs, and the ladder from the
+  // doorman to the chief is a ladder of specials: nothing, then a hazard you have to
+  // walk around, then thrown things, then a cable that drags you in, then all of it.
+  // `gates` is what makes an elite the room's lock: the exit stays shut until it's down.
+  const BOSS_KINDS = {
+    doorman: {
+      hp: 4, roam: 16, charge: 70, gates: true, bonus: 10,
+      shape: DOORMAN_SHAPE, label: 'THE DOORMAN', tell: '#c9a227',
+      beaten: 'THE DOORMAN WAVES YOU THROUGH',
+      special: null,                                   // pure muscle: he just charges
+    },
+    attendant: {
+      hp: 6, roam: 20, charge: 84, gates: true, bonus: 10,
+      shape: ATTENDANT_SHAPE, label: 'THE ATTENDANT', tell: '#cfe4ff',
+      beaten: 'THE ATTENDANT MOPS OFF - THE GATE IS OPEN',
+      special: { kind: 'spill', beats: 2, gap: 0.5, windup: 0.5, life: 5, radius: 19 },
+    },
+    bartender: {
+      hp: 8, roam: 24, charge: 100, gates: true, bonus: 12,
+      shape: BARTENDER_SHAPE, label: 'THE BARTENDER', tell: '#2a5c3a',
+      beaten: 'LAST CALL - THE BARTENDER IS DOWN',
+      // `odds`/`rest` throttle him: two rooms in, back-to-back bottles read as a
+      // harder fight than the chief's. See the note on `odds` in updateBoss.
+      special: { kind: 'throw', beats: 2, gap: 0.58, windup: 0.42, odds: 0.5, rest: 2.4,
+                 count: 1, spread: 0, speed: 120, art: 'bottle', leaves: 'glass' },
+    },
+    cook: {
+      hp: 10, roam: 27, charge: 114, gates: true, bonus: 14,
+      shape: COOK_SHAPE, label: 'THE LINE COOK', tell: '#e8734a',
+      beaten: 'ORDER UP - THE LINE COOK IS DOWN',
+      special: { kind: 'throw', beats: 2, gap: 0.55, windup: 0.45, odds: 0.55, rest: 2.2,
+                 count: 3, spread: 0.3, speed: 114, art: 'pan', leaves: 'fire' },
+    },
+    roadie: {
+      hp: 12, roam: 30, charge: 126, gates: true, bonus: 16,
+      shape: ROADIE_SHAPE, label: 'THE ROADIE', tell: '#9ff0cb',
+      beaten: 'THE ROADIE COILS UP AND LETS YOU PAST',
+      special: { kind: 'lash', beats: 2, gap: 0.75, windup: 0.42, reach: 70 },
+    },
+    security: {
+      hp: 14, roam: 32, charge: 132, gates: true, bonus: 25, backup: true,
+      shape: SECURITY_SHAPE, label: 'THE SECURITY BOSS', tell: '#e8734a',
+      beaten: 'THE SECURITY BOSS IS DOWN - THE STAGE DOOR IS CLEAR',
+      special: { kind: 'throw', beats: 2, gap: 0.6, windup: 0.4,
+                 count: 3, spread: 0.36, speed: 116, art: 'barrier' },
+    },
+    // The one optional elite, and he shares the backroom with the roadie -- who is
+    // the room's actual lock. Two full-size elites at once was too much, so he is a
+    // smaller body on a shorter ladder: quick to corner, quick to put down, and his
+    // rings only come out about half the times you close on him.
+    drummer: {
+      hp: 5, roam: 14, charge: 70, gates: false, bonus: 12, w: 16, h: 20,
+      shape: DRUMMER_SHAPE, label: 'THE WILD DRUMMER', tell: '#feffa3',
+      beaten: 'THE WILD DRUMMER IS TAMED! HE JOINS THE BAND',
+      special: { kind: 'rings', beats: 2, gap: 0.6, windup: 0, odds: 0.5, rest: 2.4 },
+    },
+  };
+  // the default elite body; a kind may override it (the drummer is 16x20)
+  const BOSS_W = 20, BOSS_H = 24;
+  function makeBoss(def) {
+    const spec = BOSS_KINDS[def.kind];
+    return {
+      kind: def.kind, x: def.col * TILE, y: def.row * TILE,
+      w: spec.w || BOSS_W, h: spec.h || BOSS_H,
+      hp: spec.hp, max: spec.hp, vx: 0, vy: 0, state: 'wander', timer: 1.2,
+      knock: 0, flash: 0, beats: 0, beatTimer: 0, calledBackup: false,
+    };
+  }
+  // the elite holding this room's exit shut, if it still stands
+  function gatingBoss() {
+    return stage.bosses.find((b) => BOSS_KINDS[b.kind].gates) || null;
+  }
+
+  function drawEnemy(en) {
+    const shape = ENEMY_SHAPES[en.type];
+    const x = Math.round(en.x), y = Math.round(en.y);
+    const w = shape[0].length;
+    const struck = en.flash > 0;
+    for (let row = 0; row < shape.length; row++) {
+      const line = shape[row];
+      for (let col = 0; col < w; col++) {
+        const ch = line[col];
+        if (ch === '.') continue;
+        ctx.fillStyle = struck ? '#ffffff' : ENEMY_PALETTE[ch];
+        ctx.fillRect(x + col, y + row, 1, 1);
+      }
+    }
+    // once wounded, carry a chip of health above so multi-hit enemies show progress
+    const full = ENEMY_HP[en.type];
+    if (en.hp < full && en.hp > 0) {
+      ctx.fillStyle = 'rgba(10,6,20,0.75)';
+      ctx.fillRect(x, y - 4, w, 3);
+      ctx.fillStyle = en.hp / full > 0.5 ? '#feffa3' : '#e8734a';
+      ctx.fillRect(x + 1, y - 3, Math.max(1, Math.round((w - 2) * en.hp / full)), 1);
+    }
+  }
+  // each type moves differently so you can read the threat from its motion, not just its sprite
+  function updateEnemy(en, dt) {
+    if (en.knock > 0) en.knock -= dt;
+    if (en.flash > 0) en.flash -= dt;
+    const speed = ENEMY_SPEED[en.type] || 24;
+    const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+    const ecx = en.x + en.w / 2, ecy = en.y + en.h / 2;
+    const dist = Math.hypot(pcx - ecx, pcy - ecy);
+
+    en.retimer -= dt;
+    if (en.knock > 0) {
+      // Shoved or struck: ride the knockback out before the AI takes the wheel again.
+      // Without this, enforcers and bouncers re-aim on the very next frame and a push
+      // moves them precisely nothing.
+    } else if (en.type === 'puck') {
+      // never re-aims — pure ricochet, keeps its speed forever
+      if (en.vx === 0 && en.vy === 0) {
+        const a = Math.random() * Math.PI * 2;
+        en.vx = Math.cos(a) * speed; en.vy = Math.sin(a) * speed;
+      }
+    } else if (en.type === 'hockey' && dist < 80) {
+      // enforcer locks on and charges once you're in its zone
+      const a = Math.atan2(pcy - ecy, pcx - ecx);
+      en.vx = Math.cos(a) * speed * 1.7;
+      en.vy = Math.sin(a) * speed * 1.7;
+    } else if (en.type === 'bouncer' && dist < 120) {
+      // slow, relentless, always closing
+      const a = Math.atan2(pcy - ecy, pcx - ecx);
+      en.vx = Math.cos(a) * speed;
+      en.vy = Math.sin(a) * speed;
+    } else if (en.retimer <= 0) {
+      // fans jitter constantly; everything else wanders
+      const a = Math.random() * Math.PI * 2;
+      en.vx = Math.cos(a) * speed;
+      en.vy = Math.sin(a) * speed;
+      en.retimer = en.type === 'fan' ? 0.25 + Math.random() * 0.35 : 1 + Math.random() * 1.5;
+    }
+
+    const nx = en.x + en.vx * dt, ny = en.y + en.vy * dt;
+    if (isSolidPixel(en.vx > 0 ? nx + en.w - 1 : nx, en.y + en.h / 2)) en.vx *= -1; else en.x = nx;
+    if (isSolidPixel(en.x + en.w / 2, en.vy > 0 ? ny + en.h - 1 : ny)) en.vy *= -1; else en.y = ny;
+  }
+  // One beat of the special: whichever of the four things this elite does.
+  function fireSpecial(b, ang) {
+    const sp = BOSS_KINDS[b.kind].special;
+    const bcx = b.x + b.w / 2, bcy = b.y + b.h / 2;
+    if (sp.kind === 'rings') {
+      waves.push({ x: bcx, y: bcy, r: 10, max: 78, life: 1 });
+    } else if (sp.kind === 'throw') {
+      for (let i = 0; i < sp.count; i++) {
+        const a = ang + (i - (sp.count - 1) / 2) * sp.spread;
+        bolts.push({
+          x: bcx, y: bcy, vx: Math.cos(a) * sp.speed, vy: Math.sin(a) * sp.speed,
+          life: 2.4, spin: Math.random() * 6, art: sp.art, leaves: sp.leaves || null,
+        });
+      }
+    } else if (sp.kind === 'spill') {
+      // soap goes down between you and him, so the floor itself becomes the problem
+      const reach = 26 + Math.random() * 44;
+      const life = sp.life || 7;
+      hazards.push({
+        x: bcx + Math.cos(ang) * reach, y: bcy + Math.sin(ang) * reach,
+        r: sp.radius || 20, kind: 'soap', life, max: life,
+      });
+    } else if (sp.kind === 'lash') {
+      fireLash(b, ang, sp.reach);
+    }
+  }
+
+  // The cable snaps out in a straight line and is gone in a third of a second — it is
+  // a hit-scan, not a projectile. Caught, you are dragged in and pinned for a beat.
+  function fireLash(b, ang, reach) {
+    const bcx = b.x + b.w / 2, bcy = b.y + b.h / 2;
+    lashes.push({ x: bcx, y: bcy, ang, len: reach, life: 0.32, max: 0.32 });
+    if (invuln > 0) return;
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+    const along = Math.max(0, Math.min(reach, (pcx - bcx) * dx + (pcy - bcy) * dy));
+    if (Math.hypot(pcx - (bcx + dx * along), pcy - (bcy + dy * along)) > 9) return;
+    const pull = Math.min(along - 14, 30);
+    if (pull > 0) { tryMove(-dx * pull, 0); tryMove(0, -dy * pull); }
+    stunned = 0.7;
+    hurtPlayer(1.1);
+  }
+
+  // Wander, charge you down, then plant and unload. Same rhythm for every elite; the
+  // special is what tells them apart, and what the difficulty ladder is built from.
+  function updateBoss(b, dt) {
+    if (b.knock > 0) b.knock -= dt;
+    if (b.flash > 0) b.flash -= dt;
+    const spec = BOSS_KINDS[b.kind];
+    const sp = spec.special;
+    const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+    const bcx = b.x + b.w / 2, bcy = b.y + b.h / 2;
+    const ang = Math.atan2(pcy - bcy, pcx - bcx);
+
+    b.timer -= dt;
+    if (b.state === 'wander') {
+      if (b.timer <= 0) {
+        const near = Math.hypot(pcx - bcx, pcy - bcy) < 110;
+        // `odds` (default 1) is the chance an elite in range actually unloads rather
+        // than just charging you, and `rest` (default 1) is how long he stands off
+        // afterwards. Only the two mid elites use them: firing every single time you
+        // came in range made them read as harder than the chief.
+        const unload = near && sp && Math.random() < (sp.odds === undefined ? 1 : sp.odds);
+        b.state = unload ? 'special' : 'charge';
+        b.timer = b.state === 'special' ? 1.5 : 1.1;
+        if (b.state === 'special') {
+          b.vx = 0; b.vy = 0;
+          b.beats = sp.beats;
+          b.beatTimer = sp.windup;          // a beat of wind-up so the tell is readable
+        } else { b.vx = Math.cos(ang) * spec.charge; b.vy = Math.sin(ang) * spec.charge; }
+      } else if (b.vx === 0 && b.vy === 0) {
+        const a = Math.random() * Math.PI * 2;
+        b.vx = Math.cos(a) * spec.roam; b.vy = Math.sin(a) * spec.roam;
+      }
+    } else if (b.state === 'charge') {
+      if (b.timer <= 0) { b.state = 'wander'; b.timer = 0.8 + Math.random(); b.vx *= 0.2; b.vy *= 0.2; }
+    } else if (b.state === 'special') {
+      if (!sp) { b.state = 'wander'; b.timer = 1; return; }   // the doorman has none
+      b.vx = 0; b.vy = 0;
+      b.beatTimer -= dt;
+      if (b.beatTimer <= 0 && b.beats > 0) {
+        b.beats -= 1;
+        b.beatTimer = sp.gap;
+        fireSpecial(b, ang);
+      }
+      if (b.timer <= 0) { b.state = 'wander'; b.timer = (sp.rest || 1) + Math.random(); }
+    }
+
+    const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
+    if (isSolidPixel(b.vx > 0 ? nx + b.w - 1 : nx, b.y + b.h / 2)) b.vx *= -1; else b.x = nx;
+    if (isSolidPixel(b.x + b.w / 2, b.vy > 0 ? ny + b.h - 1 : ny)) b.vy *= -1; else b.y = ny;
+  }
+
+  function damageBoss(b, dmg, knock, fromX, fromY) {
+    if (!b || b.hp <= 0) return;
+    const spec = BOSS_KINDS[b.kind];
+    b.hp -= dmg;
+    b.flash = 0.14;
+    const a = Math.atan2(b.y + b.h / 2 - fromY, b.x + b.w / 2 - fromX);
+    b.vx = Math.cos(a) * knock * 0.5;
+    b.vy = Math.sin(a) * knock * 0.5;
+
+    // hurt him badly enough and the chief calls two enforcers in over the radio
+    if (spec.backup && !b.calledBackup && b.hp > 0 && b.hp <= b.max / 2) {
+      b.calledBackup = true;
+      for (const off of [[-30, -22], [30, 22]]) {
+        stage.enemies.push({
+          type: 'hockey',
+          x: Math.max(TILE, Math.min(MAP_W - TILE * 2, b.x + off[0])),
+          y: Math.max(TILE, Math.min(MAP_H - TILE * 2, b.y + off[1])),
+          w: ENEMY_SIZE.hockey.w, h: ENEMY_SIZE.hockey.h,
+          hp: ENEMY_HP.hockey, vx: 0, vy: 0, retimer: 0, knock: 0, flash: 0,
+        });
+      }
+      showToast('THE CHIEF WHISTLES FOR BACKUP!', 1.3, null);
+      return;
+    }
+    if (b.hp > 0) return;
+
+    // down. Every elite pays out seconds — the clock is what a mandatory fight costs
+    // you, so beating one has to hand some of it back.
+    stage.bosses = stage.bosses.filter((x) => x !== b);
+    if (b.kind === 'drummer') drummerTamed = true;
+    if (!stage.bosses.some((x) => BOSS_KINDS[x.kind].special)) {
+      waves.length = 0;
+      bolts.length = 0;
+      lashes.length = 0;
+    }
+    timeLeft += spec.bonus;
+    addFx('time', b.x + b.w / 2, b.y, 'up', 0, 1.2, `+${spec.bonus}s`);
+    showToast(spec.beaten, 1.6, null);
+  }
+
+  function drawBoss(b) {
+    const spec = BOSS_KINDS[b.kind];
+    const shape = spec.shape;
+    const x = Math.round(b.x), y = Math.round(b.y);
+    // winding up for the special: a ring that tightens, so the throw is readable
+    if (b.state === 'special') {
+      const t = (performance.now() / 220) % 1;
+      ctx.globalAlpha = 0.65 * (1 - t);
+      ctx.strokeStyle = spec.tell;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x + b.w / 2, y + b.h / 2, 14 + t * 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    const hidden = b.flash > 0 && Math.floor(performance.now() / 50) % 2 === 0;
+    if (!hidden) {
+      const w = shape[0].length;
+      for (let row = 0; row < shape.length; row++) {
+        const line = shape[row];
+        for (let col = 0; col < w; col++) {
+          const ch = line[col];
+          if (ch === '.') continue;
+          ctx.fillStyle = ENEMY_PALETTE[ch];
+          ctx.fillRect(x + col, y + row, 1, 1);
+        }
+      }
+    }
+    // health bar floats above him so you can tell he is a boss, not scenery
+    const pct = Math.max(0, b.hp) / b.max;
+    ctx.fillStyle = 'rgba(10,6,20,0.75)';
+    ctx.fillRect(x, y - 6, b.w, 4);
+    ctx.fillStyle = pct > 0.4 ? '#feffa3' : '#e8734a';
+    ctx.fillRect(x + 1, y - 5, Math.max(0, Math.round((b.w - 2) * pct)), 2);
+  }
+
+  // Whatever the room's elite throws, tumbling end over end. Bright against any
+  // floor, because every one of these costs a life on contact.
+  function drawBolt(bo) {
+    const x = Math.round(bo.x), y = Math.round(bo.y);
+    const t = performance.now() / 90 + bo.spin;
+    const lean = Math.sin(t) * 3;
+    if (bo.art === 'bottle') {
+      ctx.fillStyle = COLOR.outline;
+      ctx.fillRect(x - 4, y - 5, 8, 11);
+      ctx.fillStyle = '#2a5c3a';
+      ctx.fillRect(x - 3, y - 2, 6, 7);
+      ctx.fillRect(x - 1, y - 5, 2, 4);
+      ctx.fillStyle = '#9ff0cb';
+      ctx.fillRect(x - 3, y - 1, 2, 4);
+    } else if (bo.art === 'pan') {
+      ctx.fillStyle = '#5a5f7a';
+      ctx.fillRect(x - 7, Math.round(y - 1 + lean), 14, 4);
+      ctx.fillStyle = '#9aa5ac';
+      ctx.fillRect(x - 6, Math.round(y - 2 + lean), 12, 2);
+      ctx.fillStyle = '#e8734a';
+      ctx.fillRect(x - 4, Math.round(y - 5 + lean), 8, 3);
+      ctx.fillStyle = '#feffa3';
+      ctx.fillRect(x - 2, Math.round(y - 6 + lean), 4, 2);
+    } else {
+      ctx.fillStyle = '#e8edf0';
+      ctx.fillRect(x - 8, Math.round(y - 4 + lean), 16, 2);
+      ctx.fillRect(x - 8, Math.round(y + 2 - lean), 16, 2);
+      ctx.fillStyle = '#e8734a';
+      ctx.fillRect(x - 8, y - 6, 3, 12);
+      ctx.fillRect(x + 5, y - 6, 3, 12);
+      ctx.fillStyle = COLOR.outline;
+      ctx.fillRect(x - 8, y - 7, 3, 1);
+      ctx.fillRect(x + 5, y - 7, 3, 1);
+    }
+  }
+
+  // Ground the elites leave behind: soap you slide on, glass and grease fire that bite.
+  const HAZARD_LOOK = {
+    soap: { fill: 'rgba(207,228,255,0.30)', edge: '#cfe4ff', spec: '#ffffff' },
+    glass: { fill: 'rgba(159,240,203,0.22)', edge: '#9ff0cb', spec: '#e8edf0' },
+    fire: { fill: 'rgba(232,115,74,0.30)', edge: '#e8734a', spec: '#feffa3' },
+  };
+  function drawHazard(hz) {
+    const look = HAZARD_LOOK[hz.kind];
+    const fade = Math.min(1, hz.life / 1.2);
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = look.fill;
+    ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = look.edge;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.r, 0, Math.PI * 2); ctx.stroke();
+    // a few flecks so a puddle reads as wet and a fire reads as alive
+    const t = performance.now() / (hz.kind === 'fire' ? 90 : 420);
+    ctx.fillStyle = look.spec;
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + t * (hz.kind === 'soap' ? 0.4 : 1);
+      const rr = hz.r * (0.3 + 0.5 * ((i * 7 % 5) / 5));
+      const fx = Math.round(hz.x + Math.cos(a) * rr);
+      const fy = Math.round(hz.y + Math.sin(a) * rr * 0.7);
+      ctx.fillRect(fx, fy, 2, hz.kind === 'fire' ? 3 : 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // the roadie's cable, snapped taut for a third of a second
+  function drawLash(la) {
+    const t = 1 - la.life / la.max;
+    const len = la.len * Math.min(1, t * 3.5);
+    ctx.strokeStyle = '#9ff0cb';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 1 - t * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(la.x, la.y);
+    ctx.lineTo(la.x + Math.cos(la.ang) * len, la.y + Math.sin(la.ang) * len);
+    ctx.stroke();
+    ctx.fillStyle = '#feffa3';
+    ctx.fillRect(Math.round(la.x + Math.cos(la.ang) * len) - 2,
+                 Math.round(la.y + Math.sin(la.ang) * len) - 2, 4, 4);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawWave(wv) {
+    const t = 1 - wv.life;
+    ctx.strokeStyle = '#feffa3';
+    ctx.globalAlpha = Math.max(0, wv.life) * 0.9;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(wv.x, wv.y, wv.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#eecbff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(wv.x, wv.y, Math.max(0, wv.r - 4), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function rectsOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  // ---------- Mike's synth: fires music-note projectiles at enemies ----------
+  function drawNote(n) {
+    ctx.fillStyle = '#feffa3';
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(Math.round(n.x) + 1, Math.round(n.y) - 4, 1, 4);
+  }
+  function updateNote(n, dt) {
+    n.x += n.vx * dt;
+    n.y += n.vy * dt;
+    n.life -= dt;
+  }
+  // a thrown gear item (pick/mic/guitar) spinning as it flies across the room
+  function drawShot(s) {
+    const spin = Math.floor(performance.now() / 80) % 2 === 1;
+    drawIcon(ITEM_SHAPES[s.item], Math.round(s.x) - 4, Math.round(s.y) - 4, ITEM_COLOR[s.item]);
+    if (spin) {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillRect(Math.round(s.x) - 4, Math.round(s.y) - 4, 8, 8);
+    }
+  }
+  // Props hang on the shoulder AWAY from the direction the sprite faces, mirrored
+  // about the 16px sprite centre. Turning left used to swing the instrument a long
+  // way out in front of Sebastian; now left and right are exact mirror images and
+  // the body always sits behind him.
+  function drawSynthProp(x, y, flip, s = 1) {
+    const ox = (flip ? 9 : 1) * s;
+    ctx.fillStyle = '#171225';
+    ctx.fillRect(x + ox, y + 9 * s, 6 * s, 4 * s);
+    ctx.fillStyle = '#f0eef5';
+    for (let i = 0; i < 3; i++) ctx.fillRect(x + ox + (1 + i * 2) * s, y + 9 * s, 1 * s, 2 * s);
+  }
+  // Guitar slung across the front — neck peeking over the shoulder, body hanging down.
+  // `hang` is how far off centre the whole instrument sits, and it is what keeps the
+  // neck off the face: Mel's is only four pixels wide, so a neck at hang 4 covered a
+  // whole lens of her glasses.
+  // A strung instrument drawn as two overlapping bouts joined by a waist, plus a
+  // fretted neck and hardware — reads as a guitar silhouette rather than a stack of boxes.
+  function drawStrungInstrument(x, y, flip, cfg, s = 1) {
+    const bx = x + (8 + (flip ? cfg.hang : -cfg.hang)) * s;
+    const dark = '#171225';
+    const R = (v) => v * s;
+
+    // headstock and tuner pegs
+    ctx.fillStyle = dark;
+    ctx.fillRect(bx - R(2), y + R(cfg.top), R(5), R(4));
+    ctx.fillStyle = cfg.hardware;
+    ctx.fillRect(bx - R(3), y + R(cfg.top + 1), R(1), R(1));
+    ctx.fillRect(bx + R(3), y + R(cfg.top + 1), R(1), R(1));
+    ctx.fillRect(bx - R(3), y + R(cfg.top + 3), R(1), R(1));
+
+    // neck, with frets stepping down it
+    const neckTop = y + R(cfg.top + 4);
+    ctx.fillStyle = '#4a3020';
+    ctx.fillRect(bx - R(1), neckTop, R(3), R(cfg.neck));
+    ctx.fillStyle = cfg.hardware;
+    for (let f = 3; f < cfg.neck; f += 3) ctx.fillRect(bx - R(1), neckTop + R(f), R(3), R(1));
+
+    // Body: an upper bout, a pinched waist, then a fuller lower bout. This used to be
+    // two ellipses joined by a narrow strip, which tapers from a small circle to a big
+    // one and reads as a wedge -- the third ellipse at the waist is what turns that
+    // silhouette back into a guitar. Keeping the two bouts close in size matters for
+    // the same reason: the wider the gap between them, the more triangular it looks.
+    const squash = 0.92;
+    const waistY = (cfg.upperY + cfg.lowerY) / 2;
+    const waistR = cfg.upperR * 0.78;
+    // Stroking each bout separately outlines them as circles and the body reads as a
+    // snowman. Paint the whole shape once oversized in the outline colour and once at
+    // size on top instead -- that leaves a rim around the silhouette and nothing
+    // drawn across the waist.
+    const body = (grow, color) => {
+      const ur = cfg.upperR + grow, wr = waistR + grow, lr = cfg.lowerR + grow;
+      ctx.fillStyle = color;
+      ctx.fillRect(bx - R(wr), y + R(cfg.upperY), R(wr * 2), R(cfg.lowerY - cfg.upperY));
+      for (const [yy, rr] of [[cfg.upperY, ur], [waistY, wr], [cfg.lowerY, lr]]) {
+        ctx.beginPath();
+        ctx.ellipse(bx, y + R(yy), R(rr), R(rr * squash), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+    body(0.7, dark);
+    body(0, cfg.body);
+
+    // pickups and bridge
+    ctx.fillStyle = dark;
+    for (const py of cfg.pickups) ctx.fillRect(bx - R(2), y + R(py), R(5), R(1));
+    ctx.fillStyle = cfg.hardware;
+    ctx.fillRect(bx - R(2), y + R(cfg.bridge), R(5), R(1));
+  }
+
+  function drawGuitarProp(x, y, flip, s = 1) {
+    drawStrungInstrument(x, y, flip, {
+      top: 1, neck: 6, upperY: 11, upperR: 3.2, lowerY: 15.5, lowerR: 3.8, hang: 5,
+      body: '#c0392b', hardware: '#d9c07a', pickups: [13, 16], bridge: 18,
+    }, s);
+  }
+  // The bass runs a longer scale and a fuller body than the guitar. Butterscotch
+  // rather than navy: the old '#2a4d7a' sat between Mel's blue top and the dark stage
+  // backdrop and the instrument simply vanished on both.
+  function drawBassProp(x, y, flip, s = 1) {
+    drawStrungInstrument(x, y, flip, {
+      top: -2, neck: 10, upperY: 13, upperR: 3.3, lowerY: 17.5, lowerR: 4, hang: 6,
+      body: '#d9a441', hardware: '#e8edf0', pickups: [16], bridge: 19,
+    }, s);
+  }
+
+  // ---------- stages: Sebastian hunts his gear (and Mel) before showtime ----------
+  // One clock for the whole venue, not one per room. Every elite you put down hands
+  // some of it back, which is what makes six mandatory fights affordable.
+  const RUN_TIME = 360;
+
+  // Layouts are generated and flood-fill verified: every bouncer is reachable while the
+  // security gate is still shut, the exit is NOT reachable until it opens, and the item,
+  // Mike, the boss and every enemy spawn are reachable once it does.
+  // 'G' is a security gate — it stays locked until the room's bouncers are down.
+
+  const STAGE_DEFS = [
+  {
+    title: 'FRONT ENTRANCE', theme: 'entrance', item: 'strings',
+    itemCol: 30, itemRow: 20, playerCol: 2, playerRow: 12,
+    doorCol: 39, doorRow: 12, hasMike: false,
+    bosses: [{ kind: 'doorman', col: 33, row: 12 }],
+    enemies: [{ type: 'fan', col: 20, row: 5 }, { type: 'hockey', col: 15, row: 10 }, { type: 'puck', col: 15, row: 19 }, { type: 'fan', col: 6, row: 20 }],
+    rows: [
+      "########################################",
+      "#......................................#",
+      "#.p..............................p.....#",
+      "#...TTTTTTTT........TTTTT..............#",
+      "#...TTTTTTTT........TTTTT..............#",
+      "#.............................s........#",
+      "#.............p...............s........#",
+      "#......................................#",
+      "#...rrrrr....rrrrr....rrrrr............#",
+      "#.................................cc...#",
+      "#.................................c#####",
+      "#.................................ccG..D",
+      "#.....rrrrr....rrrrr....rrrrr.......G..D",
+      "#...................................G..D",
+      "#..................................#####",
+      "#......................................#",
+      "#...rrrrr....rrrrr....rrrrr............#",
+      "#.............................s........#",
+      "#.............................s........#",
+      "#.........................p............#",
+      "#...AA.................................#",
+      "#.p..............................p.....#",
+      "#......................................#",
+      "########################################",
+    ],
+  },
+  {
+    title: 'BATHROOM', theme: 'bathroom', item: 'cable',
+    itemCol: 36, itemRow: 18, playerCol: 2, playerRow: 4,
+    doorCol: 20, doorRow: 23, hasMike: true, mikeCol: 26, mikeRow: 12,
+    bosses: [{ kind: 'attendant', col: 4, row: 21 }],
+    enemies: [{ type: 'fan', col: 9, row: 12 }, { type: 'puck', col: 21, row: 12 }, { type: 'hockey', col: 27, row: 13 }, { type: 'fan', col: 33, row: 3 }, { type: 'puck', col: 15, row: 21 }],
+    rows: [
+      "########################################",
+      "#......................................#",
+      "#..wwwwwwwwwwww.....wwwwww.............#",
+      "#......................................#",
+      "#......................................#",
+      "#.................................ww...#",
+      "#.....#.....#.....#.....#.....#........#",
+      "#..t..#..t..#..t..#..t..#..t..#........#",
+      "#.....#.....#.....#.....#.....#...cc...#",
+      "#.....#.....#.....#.....#.....#...cc...#",
+      "#.....#.....#.....#.....#.....#...cc...#",
+      "#......................................#",
+      "#.................................t....#",
+      "#.................................t....#",
+      "#.....#.....#.....#.....#.....#........#",
+      "#.....#.....#.....#.....#.....#........#",
+      "#..t..#..t..#..t..#..t..#..t..#........#",
+      "#.....#.....#.....#.....#.....#........#",
+      "#.....#.....#.....#.....#.....#........#",
+      "#.................#...#................#",
+      "#..cc.............#GGG#................#",
+      "#.................#...#................#",
+      "#.................#...#................#",
+      "###################DDD##################",
+    ],
+  },
+  {
+    title: 'DIVE BAR', theme: 'bar', item: 'pedal',
+    itemCol: 18, itemRow: 21, playerCol: 2, playerRow: 12,
+    doorCol: 33, doorRow: 0, hasMike: false,
+    bosses: [{ kind: 'bartender', col: 12, row: 8 }],
+    enemies: [{ type: 'fan', col: 24, row: 8 }, { type: 'hockey', col: 18, row: 16 }, { type: 'puck', col: 24, row: 21 }, { type: 'fan', col: 6, row: 21 }, { type: 'puck', col: 30, row: 12 }, { type: 'hockey', col: 14, row: 2 }],
+    rows: [
+      "###ffffff#######################DDD#####",
+      "#..............................#...#...#",
+      "#..x....................x......#...#...#",
+      "#..............................#GGG#...#",
+      "#...BBBBBBBBBBBBBBBBBBBB.......#...#...#",
+      "#...TTTTTTTTTTTTTTTTTTTT...............#",
+      "#....o..o..o..o..o..o..................#",
+      "#.............................A........#",
+      "#.............................A........f",
+      "#..x....~~~~~~~~~~~~~~...........cc....f",
+      "#.......~~~~~~~~~~~~~~...........cc....f",
+      "#.......~~~~~~~~~~~~~~...........cc....f",
+      "#.......~~~~~~~~~~~~~~...........cc....f",
+      "#.......~~~~~~~~~~~~~~...........cc....f",
+      "#................................cc....f",
+      "#.......rrrr....rrrr...................f",
+      "#..................................x...#",
+      "#...o.....o.....o.....o.....o.....j....#",
+      "#...TTTTTTT.....TTTTTTT....TTTT...j....#",
+      "#...TTTTTTT.....TTTTTTT....TTTT........#",
+      "#.....x.........................x......#",
+      "#......................................#",
+      "#......................................#",
+      "############ffffffffff##################",
+    ],
+  },
+  {
+    title: 'KITCHEN', theme: 'kitchen', item: 'pick',
+    itemCol: 10, itemRow: 21, playerCol: 2, playerRow: 2,
+    doorCol: 39, doorRow: 4, hasMike: false,
+    bosses: [{ kind: 'cook', col: 15, row: 16 }],
+    enemies: [{ type: 'fan', col: 8, row: 10 }, { type: 'hockey', col: 25, row: 15 }, { type: 'puck', col: 28, row: 4 }, { type: 'fan', col: 34, row: 11 }, { type: 'hockey', col: 14, row: 22 }, { type: 'puck', col: 18, row: 4 }, { type: 'puck', col: 28, row: 21 }, { type: 'bouncer', col: 25, row: 8 }],
+    rows: [
+      "########################################",
+      "#......................................#",
+      "#....TTTTTTTT.......TTTTT..........#####",
+      "#...................................G..D",
+      "#...................................G..D",
+      "#...................................G..D",
+      "#....TTTTT...TTTTT...TTTTT.........#####",
+      "#....TTTTT...TTTTT...TTTTT.............#",
+      "#......................................#",
+      "#.............................cc..c....#",
+      "#.............................cc..c....#",
+      "#.............................cc.......#",
+      "#....TTTTT...TTTTT...TTTTT....cc.......#",
+      "#....TTTTT...TTTTT...TTTTT....cc.......#",
+      "#.............................cc.......#",
+      "#......................................#",
+      "#................................ww....#",
+      "#................................ww....#",
+      "#....TTTTT...TTTTT...TTTTT.............#",
+      "#....TTTTT...TTTTT...TTTTT.............#",
+      "#.................................s....#",
+      "#....ccc..........................s....#",
+      "#......................................#",
+      "########################################",
+    ],
+  },
+  {
+    title: 'BACKROOM', theme: 'backroom', item: 'mic',
+    itemCol: 36, itemRow: 5, playerCol: 2, playerRow: 20,
+    doorCol: 8, doorRow: 23, hasMike: false,
+    bosses: [{ kind: 'roadie', col: 14, row: 15 }, { kind: 'drummer', col: 30, row: 4 }],
+    enemies: [{ type: 'hockey', col: 22, row: 12 }, { type: 'fan', col: 12, row: 19 }, { type: 'puck', col: 28, row: 5 }, { type: 'fan', col: 35, row: 18 }, { type: 'hockey', col: 34, row: 5 }, { type: 'puck', col: 16, row: 2 }, { type: 'fan', col: 6, row: 2 }, { type: 'hockey', col: 35, row: 12 }, { type: 'bouncer', col: 26, row: 21 }],
+    rows: [
+      "########################################",
+      "#......................................#",
+      "#......................................#",
+      "#...gg.gg.gg....yyyy....gg.gg..........#",
+      "#......................................#",
+      "#......................................#",
+      "#.............cc..............kkk......#",
+      "#.............cc..............kkk......#",
+      "#...~~~~~~~~~~.........................#",
+      "#...~~TTTTTT~~.........................#",
+      "#...~~TTTTTT~~...i....i....i...........#",
+      "#...~~~~~~~~~~.........................#",
+      "#......................................#",
+      "#....AAAA...AAAA....AAA................#",
+      "#......................................#",
+      "#.............................cccc.....#",
+      "#....TTTT.....................cccc.....#",
+      "#....TTTT...............s.....cccc.....#",
+      "#.......................s.....cccc.....#",
+      "#.....#...#...i....i..........cccc.....#",
+      "#.....#GGG#............................#",
+      "#.....#...#.rrrr....rrrr...............#",
+      "#.....#...#............................#",
+      "#######DDD##############################",
+    ],
+  },
+  {
+    title: 'BACK PATIO', theme: 'patio', item: 'guitar',
+    itemCol: 36, itemRow: 21, playerCol: 2, playerRow: 2,
+    doorCol: 30, doorRow: 0, hasMike: false,
+    bosses: [{ kind: 'security', col: 28, row: 6 }],
+    enemies: [{ type: 'hockey', col: 10, row: 5 }, { type: 'puck', col: 12, row: 18 }, { type: 'fan', col: 30, row: 18 }, { type: 'puck', col: 26, row: 3 }, { type: 'hockey', col: 22, row: 22 }, { type: 'fan', col: 32, row: 5 }, { type: 'fan', col: 13, row: 21 }, { type: 'hockey', col: 34, row: 8 }, { type: 'puck', col: 20, row: 12 }, { type: 'fan', col: 6, row: 10 }, { type: 'hockey', col: 27, row: 18 }, { type: 'bouncer', col: 15, row: 12 }],
+    rows: [
+      "#############################DDD########",
+      "#...........................#...#......#",
+      "#...........................#...#......#",
+      "#..........p................#GGG#..p...#",
+      "#...p............b..........#...#......#",
+      "#................b.....................#",
+      "#................b................s....#",
+      "#................b................s....#",
+      "#.......TTTTTTT...........b............#",
+      "#.......TTTTTTT...........b............#",
+      "#...........p.............b.......s....#",
+      "#.........................b.......s....#",
+      "#................b...............AA....#",
+      "#.....ccc........b.....................#",
+      "#.....ccc........b....TTTTTTT..........#",
+      "#.....ccc........b....TTTTTTT..........#",
+      "#.....ccc.....................p........#",
+      "#.....ccc..............................#",
+      "#......................................#",
+      "#...p...TTTTT..........................#",
+      "#.......TTTTT......................p...#",
+      "#...................p..................#",
+      "#......................................#",
+      "########################################",
+    ],
+  },
+  ];
+
+  const STAGE_BUILDERS = STAGE_DEFS.map((d) => () => d);
+
+  // ---------- player ----------
+  const player = {
+    x: 0, y: 0, w: 12, h: 14, speed: 62, facing: 'down', moving: false, animTimer: 0, animFrame: 0,
+    weaponItem: null, attackCooldown: 0, attackTimer: 0,
+    driftX: 0, driftY: 0,   // where he is actually going, which soap can pull away from input
+  };
+
+  let stage = null;
+  let phase = 'intro'; // intro | play | toast | win | gameover
+  let timeLeft = RUN_TIME;
+  let invuln = 0;
+  let stunned = 0;   // shockwave paralysis
+  let mikeUnlocked = false;
+  let mikeFireTimer = 1.5;
+  let melUnlocked = false;      // joins once you've recovered a few pieces of gear
+  const MEL_UNLOCK_AT = 3;          // items collected
+  // Her bass lays down a standing wave you have to park inside to benefit from.
+  // Tuned against a 100s stage: ~20s a cycle means roughly five windows a stage,
+  // and each one only pays out if you stop moving in a room full of enemies.
+  // She drops it wherever she happens to be, so the window has to be long enough to
+  // cross a room for and the disc has to be big enough to actually stand in. The
+  // drawn circle is exactly the area that heals — nothing outside it does anything.
+  const MEL_ZONE_RADIUS = 46;
+  const MEL_ZONE_DURATION = 11;     // seconds the boost stays up
+  const MEL_ZONE_COOLDOWN = 13;     // recharge once it fades
+  const MEL_HEAL_EVERY = 1.6;       // seconds inside per life restored
+  let melZoneCooldown = 6;
+  let healZone = null;
+  let toastMsg = '', toastTimer = 0, toastAction = null;
+  // the big glowing "what am I doing here" line across the top of the play field
+  let objective = '', objectiveFlash = 0;
+  let objectiveOverride = '', objectiveOverrideTimer = 0;
+  // Mel's own position — she runs the room instead of trailing the player
+  const mel = { x: 0, y: 0, vx: 0, vy: 0, facing: 'down', tx: 0, ty: 0, retarget: 0,
+                trail: [], mark: 0, step: false };
+  const trail = [];
+  const notes = [];
+  const shots = [];
+  const fx = [];            // short-lived melee visual effects
+  const waves = [];         // the drummer's expanding shockwaves
+  const bolts = [];         // whatever the room's elite is throwing
+  const hazards = [];       // ground the elites leave behind: soap, glass, grease fire
+  const lashes = [];        // the roadie's cable, mid-snap
+  let slipTimer = 0;        // how long the floor stays slippery underfoot
+  const itemsCollected = [false, false, false, false, false, false];
+  let drummerTamed = false; // optional: only changes the finale
+  // seconds since the lights came up on the finale. Mike walks on partway through it
+  // if you never found him, so the closing scene needs a clock of its own.
+  let winClock = 0;
+
+  const BASE_LIVES = 3;
+  let hitsTaken = 0;
+  // every piece of gear you're carrying acts as an extra shield against hits
+  function maxLives() {
+    return BASE_LIVES + itemsCollected.filter(Boolean).length;
+  }
+
+  // Where the gear lands, re-rolled every run. The authored spot in STAGE_DEFS is the
+  // fallback and the thing levels.py flood-fill proves; this picks another tile that
+  // is just as reachable, so a repeat play is a fresh search rather than a memorised
+  // walk.
+  //
+  // Two rules make a candidate legal, and both matter. It has to be reachable from
+  // the spawn with the gate **shut** — 'G' is not walkable here, which is what keeps
+  // the item out of the exit vestibule where you could never reach it in time. And it
+  // has to be a real walk from the spawn, or the room stops being a search.
+  const ITEM_MIN_TILES = 9;
+  function rollItemSpot(def) {
+    const rows = def.rows;
+    const walkable = (c, r) =>
+      c > 0 && c < COLS - 1 && r > 0 && r < ROWS - 1 &&
+      (rows[r][c] === '.' || rows[r][c] === '~');
+
+    const dist = new Map();
+    const key = (c, r) => r * COLS + c;
+    const start = [def.playerCol, def.playerRow];
+    dist.set(key(start[0], start[1]), 0);
+    const q = [start];
+    for (let head = 0; head < q.length; head++) {
+      const [c, r] = q[head];
+      const d = dist.get(key(c, r));
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nc = c + dc, nr = r + dr;
+        if (dist.has(key(nc, nr)) || !walkable(nc, nr)) continue;
+        dist.set(key(nc, nr), d + 1);
+        q.push([nc, nr]);
+      }
+    }
+
+    const spots = [];
+    for (const [k, d] of dist) {
+      if (d < ITEM_MIN_TILES) continue;
+      const c = k % COLS, r = (k - c) / COLS;
+      // keep it off the elite's own doorstep, so the fight is not forced on pickup
+      if ((def.bosses || []).some((b) => Math.abs(b.col - c) < 3 && Math.abs(b.row - r) < 3)) continue;
+      spots.push([c, r]);
+    }
+    if (!spots.length) return [def.itemCol, def.itemRow];
+    return spots[Math.floor(Math.random() * spots.length)];
+  }
+
+  function loadStage(index) {
+    const def = STAGE_BUILDERS[index]();
+    const [itemCol, itemRow] = rollItemSpot(def);
+    stage = {
+      index,
+      rows: def.rows,
+      title: def.title,
+      theme: themeFor(def.theme),
+      themeName: def.theme,
+      item: def.item,
+      itemCol, itemRow,
+      doorCol: def.doorCol,
+      doorRow: def.doorRow,
+      collected: itemsCollected[index],
+      hasMike: def.hasMike,
+      mikeCol: def.mikeCol,
+      mikeRow: def.mikeRow,
+      mikeFound: false,
+      doorTriggered: false,
+      doorTiles: doorTilesOf(def.rows),
+      bosses: (def.bosses || []).map(makeBoss),
+      enemies: def.enemies.map((e) => ({
+        type: e.type, x: e.col * TILE, y: e.row * TILE,
+        w: ENEMY_SIZE[e.type].w, h: ENEMY_SIZE[e.type].h,
+        hp: ENEMY_HP[e.type], vx: 0, vy: 0, retimer: Math.random(), knock: 0, flash: 0,
+      })),
+    };
+    player.x = def.playerCol * TILE;
+    player.y = def.playerRow * TILE;
+    player.facing = 'down';
+    player.animFrame = 0;
+    invuln = 0;
+    stunned = 0;
+    trail.length = 0;
+    notes.length = 0;
+    shots.length = 0;
+    fx.length = 0;
+    waves.length = 0;
+    bolts.length = 0;
+    hazards.length = 0;
+    lashes.length = 0;
+    slipTimer = 0;
+    player.driftX = 0;
+    player.driftY = 0;
+    healZone = null;
+    melZoneCooldown = 6;
+    objective = '';
+    objectiveFlash = 0;
+    objectiveOverrideTimer = 0;
+    placeMel();
+  }
+  loadStage(0);
+
+  function resetGame() {
+    timeLeft = RUN_TIME;
+    mikeUnlocked = false;
+    melUnlocked = false;
+    healZone = null;
+    melZoneCooldown = 6;
+    drummerTamed = false;
+    winClock = 0;
+    player.weaponItem = null;
+    hitsTaken = 0;
+    for (let i = 0; i < itemsCollected.length; i++) itemsCollected[i] = false;
+    loadStage(0);
+  }
+
+  function showToast(msg, duration, action) {
+    toastMsg = msg;
+    toastTimer = duration;
+    toastAction = action;
+    phase = 'toast';
+  }
+  function finishToast() {
+    const action = toastAction;
+    toastAction = null;
+    phase = 'play';            // default; an action may queue another toast or a win
+    if (action) action();
+  }
+
+  const keys = {};
+  const KEYMAP = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right',
+    W: 'up', S: 'down', A: 'left', D: 'right',
+  };
+  window.addEventListener('keydown', (e) => {
+    const dir = KEYMAP[e.key];
+    if (dir) { keys[dir] = true; e.preventDefault(); }
+    if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
+    if (e.key === 'm' || e.key === 'M') setMusic(!music.on);
+  });
+  window.addEventListener('keyup', (e) => {
+    const dir = KEYMAP[e.key];
+    if (dir) { keys[dir] = false; e.preventDefault(); }
+    if (e.key === ' ') keys.attack = false;
+  });
+
+  // shared by the Enter/R keys and by tapping the canvas on touch devices
+  function tryAdvancePhase() {
+    if (phase === 'intro') { resetGame(); phase = 'play'; return true; }
+    if (phase === 'win' || phase === 'gameover') { resetGame(); phase = 'play'; return true; }
+    return false;
+  }
+  window.addEventListener('keydown', (e) => {
+    const isStart = phase === 'intro' && (e.key === 'Enter' || e.key === ' ');
+    const isRestart = (phase === 'win' || phase === 'gameover') && (e.key === 'r' || e.key === 'R');
+    if (isStart || isRestart) { e.preventDefault(); tryAdvancePhase(); }
+  });
+  canvas.addEventListener('touchstart', (e) => { if (tryAdvancePhase()) e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('click', () => tryAdvancePhase());
+
+  // ---------- touch controls: an analog swivel stick, shown on coarse-pointer devices
+  // via CSS. The thumb angle snaps to one of eight compass directions and holds the
+  // very same four direction flags the keyboard sets — so nothing about desktop play,
+  // movement or diagonals changes; only the way a phone feeds them in. ----------
+  const stick = document.getElementById('stick');
+  const knob = stick ? stick.querySelector('.stick-knob') : null;
+  // the pad scales with the screen in portrait, so the throw is measured off the
+  // element rather than being a fixed pixel count
+  const STICK_DEAD = 0.26;   // fraction of the throw still read as centred
+  function stickThrow() {
+    return stick ? Math.max(24, stick.getBoundingClientRect().width * 0.31) : 36;
+  }
+  const OCTANTS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  let stickId = null;
+
+  function centreStick() {
+    keys.left = keys.right = keys.up = keys.down = false;
+    if (knob) knob.style.transform = 'translate(0px, 0px)';
+    if (stick) stick.classList.remove('active');
+  }
+  function aimStick(clientX, clientY) {
+    const r = stick.getBoundingClientRect();
+    const reach = stickThrow();
+    const dx = clientX - (r.left + r.width / 2);
+    const dy = clientY - (r.top + r.height / 2);
+    const mag = Math.hypot(dx, dy);
+    if (knob) {
+      const throwPx = Math.min(mag, reach);
+      const ux = mag > 0 ? dx / mag : 0, uy = mag > 0 ? dy / mag : 0;
+      knob.style.transform = `translate(${ux * throwPx}px, ${uy * throwPx}px)`;
+    }
+    if (mag < reach * STICK_DEAD) {
+      keys.left = keys.right = keys.up = keys.down = false;
+      return;
+    }
+    const oct = ((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8;
+    const dir = OCTANTS[oct];
+    keys.right = dir[0] > 0; keys.left = dir[0] < 0;
+    keys.down = dir[1] > 0;  keys.up = dir[1] < 0;
+  }
+
+  if (stick) {
+    if (window.PointerEvent) {
+      stick.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        stickId = e.pointerId;
+        stick.classList.add('active');
+        // capture keeps tracking the thumb once it slides off the pad; if the browser
+        // refuses it, the window-level release below still un-sticks the keys
+        try { stick.setPointerCapture(e.pointerId); } catch (err) { /* nicety only */ }
+        aimStick(e.clientX, e.clientY);
+      });
+      stick.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== stickId) return;
+        e.preventDefault();
+        aimStick(e.clientX, e.clientY);
+      });
+      const release = (e) => {
+        if (e.pointerId !== stickId) return;
+        stickId = null;
+        centreStick();
+      };
+      stick.addEventListener('pointerup', release);
+      stick.addEventListener('pointercancel', release);
+      stick.addEventListener('lostpointercapture', release);
+      window.addEventListener('pointerup', release);
+      window.addEventListener('pointercancel', release);
+    } else {
+      stick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const t = e.changedTouches[0];
+        stickId = t.identifier;
+        stick.classList.add('active');
+        aimStick(t.clientX, t.clientY);
+      }, { passive: false });
+      stick.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier !== stickId) continue;
+          e.preventDefault();
+          aimStick(t.clientX, t.clientY);
+        }
+      }, { passive: false });
+      const endTouch = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier !== stickId) continue;
+          e.preventDefault();
+          stickId = null;
+          centreStick();
+        }
+      };
+      stick.addEventListener('touchend', endTouch, { passive: false });
+      stick.addEventListener('touchcancel', endTouch, { passive: false });
+    }
+  }
+  const atkBtn = document.querySelector('.atk-btn');
+  const atkPress = (e) => { e.preventDefault(); keys.attack = true; };
+  const atkRelease = (e) => { e.preventDefault(); keys.attack = false; };
+  atkBtn.addEventListener('touchstart', atkPress, { passive: false });
+  atkBtn.addEventListener('touchend', atkRelease, { passive: false });
+  atkBtn.addEventListener('touchcancel', atkRelease, { passive: false });
+  atkBtn.addEventListener('mousedown', atkPress);
+  atkBtn.addEventListener('mouseup', atkRelease);
+  atkBtn.addEventListener('mouseleave', atkRelease);
+
+  function tryMove(dx, dy) {
+    if (dx !== 0) {
+      const nx = player.x + dx;
+      const top = player.y + 2, bottom = player.y + player.h - 1;
+      const edge = dx > 0 ? nx + player.w - 1 : nx;
+      if (!isSolidPixel(edge, top) && !isSolidPixel(edge, bottom)) player.x = nx;
+    }
+    if (dy !== 0) {
+      const ny = player.y + dy;
+      const left = player.x + 1, right = player.x + player.w - 2;
+      const edge = dy > 0 ? ny + player.h - 1 : ny;
+      if (!isSolidPixel(left, edge) && !isSolidPixel(right, edge)) player.y = ny;
+    }
+  }
+
+  // Every room's exit is several tiles across now — walking into a one-tile gap at the
+  // end of a corridor was the fiddliest part of the game. The trigger is the union of
+  // every 'D' tile in the layout, so a wide doorway just works.
+  function doorTilesOf(rows) {
+    let r0 = ROWS, r1 = -1, c0 = COLS, c1 = -1;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (rows[r][c] !== 'D') continue;
+        r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+        c0 = Math.min(c0, c); c1 = Math.max(c1, c);
+      }
+    }
+    return { r0, r1, c0, c1 };
+  }
+  function doorBoxOf() {
+    const t = stage.doorTiles;
+    return {
+      x: t.c0 * TILE, y: t.r0 * TILE,
+      w: (t.c1 - t.c0 + 1) * TILE, h: (t.r1 - t.r0 + 1) * TILE,
+    };
+  }
+  function triggerDoor() {
+    if (stage.index < STAGE_BUILDERS.length - 1) {
+      const nextIndex = stage.index + 1;
+      showToast('NEXT ROOM...', 0.9, () => loadStage(nextIndex));
+    } else {
+      const missing = itemsCollected.findIndex((v) => !v);
+      if (missing === -1) {
+        showToast('SHOWTIME!', 1.2, () => { phase = 'win'; winClock = 0; });
+      } else {
+        showToast('GEAR STILL MISSING - BACK TO WORK!', 1.4, () => loadStage(missing));
+      }
+    }
+  }
+
+  // the last few gear items are thrown as projectiles instead of swung
+  // ---------- weapons: every piece of gear swings, zaps or flies differently ----------
+  // kind 'burst'  = radial hit around the player, no aiming
+  // kind 'lash'   = long thin melee reach in the facing direction
+  // kind 'sweep'  = short wide arc that catches a crowd
+  // kind 'shot'   = projectile
+  //
+  // Listed in pickup order, and every step up has to be a plain upgrade on the one
+  // before it: more damage AND a shorter cooldown AND more knockback, melee first,
+  // then the three ranged pieces. Nothing here is a sidegrade.
+  //
+  // The damage numbers are fractional on purpose. Elite health only climbs 4 -> 14
+  // across the whole venue, so stepping damage by a whole point per tier would double
+  // the ladder's output halfway up and leave the chief dying faster than the doorman.
+  // Fractions let all six weapons improve while every fight still lasts about as long
+  // as the last. checks/gameplay.js holds both halves of that.
+  const WEAPONS = {
+    strings: { kind: 'lash',  dmg: 1,   cd: 0.34, reach: 34, wide: 8,  knock: 70,  fx: 'arc' },
+    cable:   { kind: 'sweep', dmg: 1.2, cd: 0.31, reach: 40, wide: 36, knock: 85,  fx: 'sweep' },
+    pedal:   { kind: 'burst', dmg: 1.4, cd: 0.28, radius: 30, knock: 100, fx: 'zap' },
+    pick:    { kind: 'shot',  dmg: 1.6, cd: 0.25, speed: 210, pierce: false, knock: 110 },
+    mic:     { kind: 'shot',  dmg: 1.9, cd: 0.22, speed: 245, pierce: false, knock: 125 },
+    guitar:  { kind: 'shot',  dmg: 2.3, cd: 0.19, speed: 285, pierce: true,  knock: 140 },
+  };
+  // pickup order, which is the order the ladder above has to improve in
+  const WEAPON_LADDER = ['strings', 'cable', 'pedal', 'pick', 'mic', 'guitar'];
+  // Before the first pickup Sebastian is not helpless, just unarmed: an open-handed
+  // shove that moves people out of the way and takes nothing off them. It never needs
+  // a stage check -- gear is never taken away once you have it, so the only time you
+  // are carrying nothing is the front entrance before you find the strings.
+  const SHOVE = { cd: 0.42, reach: 18, wide: 26, knock: 170 };
+  const RANGED_ITEMS = new Set(
+    Object.keys(WEAPONS).filter((k) => WEAPONS[k].kind === 'shot')
+  );
+  const DIRV = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+
+  // (fx buffer is declared up with the other per-stage buffers)
+  function addFx(kind, x, y, facing, size, life = 0.22, label = '') {
+    fx.push({ kind, x, y, facing, size, life, max: life, label });
+  }
+
+  // Every way the player can get hurt funnels through here, so a life costs the same
+  // whatever took it. Returns true when that was the last one.
+  function hurtPlayer(iframes) {
+    invuln = iframes;
+    hitsTaken += 1;
+    if (hitsTaken >= maxLives()) { phase = 'gameover'; return true; }
+    return false;
+  }
+
+  function damageEnemy(en, dmg, knock, fromX, fromY) {
+    en.hp -= dmg;
+    en.knock = 0.15;
+    en.flash = 0.14;
+    addFx('hit', en.x + en.w / 2, en.y + en.h / 2, 'up', 0, 0.18);
+    const ang = Math.atan2(en.y + en.h / 2 - fromY, en.x + en.w / 2 - fromX);
+    en.vx = Math.cos(ang) * knock;
+    en.vy = Math.sin(ang) * knock;
+  }
+
+  function fireShot(w) {
+    const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+    const d = DIRV[player.facing];
+    shots.push({
+      x: cx, y: cy, vx: d[0] * w.speed, vy: d[1] * w.speed,
+      life: 1.4, item: player.weaponItem, dmg: w.dmg,
+      pierce: !!w.pierce, knock: w.knock || 90, hit: [],
+    });
+  }
+
+  // the rectangle a melee swing (or a shove) covers, in the facing direction
+  function reachBox(reach, wide) {
+    const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+    const d = DIRV[player.facing], half = wide / 2;
+    if (d[0] !== 0) {
+      return { x: d[0] > 0 ? player.x + player.w : player.x - reach, y: cy - half, w: reach, h: wide };
+    }
+    return { x: cx - half, y: d[1] > 0 ? player.y + player.h : player.y - reach, w: wide, h: reach };
+  }
+
+  // Knockback only. Nothing here touches hp, so a shove can never kill anything --
+  // it just buys you room while you are looking for your gear.
+  function tryShove() {
+    player.attackCooldown = SHOVE.cd;
+    player.attackTimer = 0.15;
+    const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+    const box = reachBox(SHOVE.reach, SHOVE.wide);
+    addFx('shove', cx, cy, player.facing, SHOVE.reach);
+    for (const en of stage.enemies) {
+      if (!rectsOverlap(box, en)) continue;
+      const ang = Math.atan2(en.y + en.h / 2 - cy, en.x + en.w / 2 - cx);
+      en.vx = Math.cos(ang) * SHOVE.knock;
+      en.vy = Math.sin(ang) * SHOVE.knock;
+      en.knock = 0.22;
+    }
+    // an elite barely budges, which is the point of him
+    for (const b of stage.bosses) {
+      if (!rectsOverlap(box, b)) continue;
+      const ang = Math.atan2(b.y + b.h / 2 - cy, b.x + b.w / 2 - cx);
+      b.vx = Math.cos(ang) * SHOVE.knock * 0.35;
+      b.vy = Math.sin(ang) * SHOVE.knock * 0.35;
+      b.knock = 0.22;
+    }
+  }
+
+  function tryAttack() {
+    const w = WEAPONS[player.weaponItem];
+    if (!w) return;
+    player.attackCooldown = w.cd;
+    player.attackTimer = 0.15;
+    const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+
+    if (w.kind === 'shot') { fireShot(w); return; }
+
+    if (w.kind === 'burst') {
+      // pedal: stomp sends a ring of current out in every direction
+      // the more gear you're hauling, the further the current arcs
+      const radius = w.radius + itemsCollected.filter(Boolean).length * 6;
+      addFx('zap', cx, cy, player.facing, radius);
+      for (const en of stage.enemies) {
+        const d = Math.hypot(en.x + en.w / 2 - cx, en.y + en.h / 2 - cy);
+        if (d <= radius) damageEnemy(en, w.dmg, w.knock, cx, cy);
+      }
+      for (const b of stage.bosses.slice()) {
+        const bd = Math.hypot(b.x + b.w / 2 - cx, b.y + b.h / 2 - cy);
+        if (bd <= radius + 8) damageBoss(b, w.dmg, w.knock, cx, cy);
+      }
+    } else {
+      // cable and strings share a rectangle, but very different proportions
+      const reach = w.reach + itemsCollected.filter(Boolean).length * 2;
+      const box = reachBox(reach, w.wide);
+      addFx(w.fx, cx, cy, player.facing, reach);
+      for (const en of stage.enemies) {
+        if (rectsOverlap(box, en)) damageEnemy(en, w.dmg, w.knock, cx, cy);
+      }
+      for (const b of stage.bosses.slice()) {
+        if (rectsOverlap(box, b)) damageBoss(b, w.dmg, w.knock, cx, cy);
+      }
+    }
+    pruneEnemies();
+  }
+
+  // clears the dead and calls out the moment security goes down, since that's what
+  // unlocks the gate to the exit
+  function pruneEnemies() {
+    // pucks are the only enemy that gives something back — bust one, get a life back
+    for (const en of stage.enemies) {
+      if (en.hp > 0 || en.type !== 'puck') continue;
+      if (hitsTaken > 0) {
+        hitsTaken -= 1;
+        addFx('heal', en.x + en.w / 2, en.y + en.h / 2, 'up', 0, 0.7);
+      }
+    }
+    stage.enemies = stage.enemies.filter((en) => en.hp > 0);
+  }
+
+  function drawFx(f) {
+    const t = 1 - f.life / f.max;
+    const d = DIRV[f.facing];
+    if (f.kind === 'zap') {
+      // expanding electric ring plus a few jagged arcs
+      const r = 6 + t * f.size;
+      ctx.strokeStyle = '#feffa3';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 1 - t;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#cfe4ff';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + t * 2;
+        ctx.beginPath();
+        ctx.moveTo(f.x + Math.cos(a) * (r - 6), f.y + Math.sin(a) * (r - 6));
+        ctx.lineTo(f.x + Math.cos(a + 0.25) * r, f.y + Math.sin(a + 0.25) * r);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'whip') {
+      // cable snaps out in a taut line with a cracking tip
+      const len = f.size * Math.min(1, t * 2.4);
+      ctx.strokeStyle = '#e8734a';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 1 - t * 0.7;
+      ctx.beginPath();
+      ctx.moveTo(f.x, f.y);
+      ctx.quadraticCurveTo(
+        f.x + d[0] * len * 0.6 - d[1] * 5, f.y + d[1] * len * 0.6 - d[0] * 5,
+        f.x + d[0] * len, f.y + d[1] * len
+      );
+      ctx.stroke();
+      ctx.fillStyle = '#feffa3';
+      ctx.fillRect(f.x + d[0] * len - 1, f.y + d[1] * len - 1, 3, 3);
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'arc') {
+      // the strings discharge along a staggered line rather than a straight snap
+      const len = f.size * Math.min(1, t * 3);
+      const px = -d[1], py = d[0];
+      const seed = (Math.round(f.x) * 7 + Math.round(f.y) * 13) % 5;
+      const segs = 6;
+      ctx.globalAlpha = 1 - t * 0.55;
+      // three passes, widest first: a dark outline, the blue core, then a white
+      // filament. Pale blue on its own vanished against a light floor.
+      for (let pass = 0; pass < 3; pass++) {
+        ctx.strokeStyle = pass === 0 ? '#0d0b14' : pass === 1 ? '#7fd8ff' : '#ffffff';
+        ctx.lineWidth = pass === 0 ? 5 : pass === 1 ? 3 : 1;
+        ctx.beginPath();
+        ctx.moveTo(f.x, f.y);
+        for (let i = 1; i <= segs; i++) {
+          const along = (i / segs) * len;
+          const jag = i === segs ? 0 : (i % 2 ? 1 : -1) * (2 + (seed + i * 3) % 4);
+          ctx.lineTo(f.x + d[0] * along + px * jag, f.y + d[1] * along + py * jag);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#feffa3';
+      ctx.fillRect(f.x + d[0] * len - 2, f.y + d[1] * len - 2, 4, 4);
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'shove') {
+      // an open-handed push: two short arcs pressing out in the facing direction,
+      // dark-backed so they hold on the entrance's pale floor
+      const base = Math.atan2(d[1], d[0]);
+      const push = 8 + t * f.size;
+      ctx.globalAlpha = 1 - t;
+      for (let pass = 0; pass < 2; pass++) {
+        ctx.strokeStyle = pass ? '#f0eef5' : '#0d0b14';
+        ctx.lineWidth = pass ? 2 : 4;
+        for (let i = 0; i < 2; i++) {
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, push + i * 5, base - 0.6, base + 0.6);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'hit') {
+      ctx.globalAlpha = 1 - t;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, 3 + t * 9, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'heal') {
+      const rise = t * 10;
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = '#9ff0cb';
+      const hx = Math.round(f.x), hy = Math.round(f.y - rise);
+      ctx.fillRect(hx - 3, hy - 1, 7, 3);
+      ctx.fillRect(hx - 1, hy - 3, 3, 7);
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'time') {
+      // seconds handed back for putting an elite down, floating up off the body
+      ctx.globalAlpha = Math.min(1, f.life * 1.6);
+      ctx.font = '8px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#feffa3';
+      ctx.fillText(f.label, f.x, f.y - t * 18);
+      ctx.textAlign = 'left';
+      ctx.globalAlpha = 1;
+    } else if (f.kind === 'sweep') {
+      // The cable is a coiled lead: a helix laid along the line from the player's hand
+      // out to a 1/4" plug, so it reads as a spring rather than a drawn blade. Earlier
+      // passes drew this swing as a bare semi-circle and it looked like a scythe — the
+      // arc it covers is expressed as motion instead, a faint wash of the swept wedge
+      // plus two fading ghosts of the coil.
+      const base = Math.atan2(d[1], d[0]);
+      const r = f.size * 0.78;
+      const swing = -0.8 + t * 1.6;                  // where the plug is right now
+      const ang = base + swing;
+      const tipX = f.x + Math.cos(ang) * r, tipY = f.y + Math.sin(ang) * r;
+
+      // the ground it has already covered
+      ctx.globalAlpha = (1 - t) * 0.3;
+      ctx.strokeStyle = '#cfe4ff';
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r, base - 0.8, ang); ctx.stroke();
+
+      // One turn of the coil. `grip` tapers the amplitude to nothing at both ends so
+      // the lead leaves his hand and meets the plug as a single strand instead of a
+      // loop hanging off each end.
+      // A helix only reads as a spring if two things hold: enough samples per turn
+      // that the loops are round rather than polygonal, and an axial lean near half
+      // the pitch so each loop closes back on itself instead of drawing a zigzag.
+      const COILS = 4, STEPS = 120, AMP = 4.6;
+      const pitch = r / COILS, axial = pitch * 0.5;
+      const coil = (ga, alpha) => {
+        const cx2 = Math.cos(ga), cy2 = Math.sin(ga);
+        const nx2 = -cy2, ny2 = cx2;
+        ctx.globalAlpha = alpha;
+        for (let pass = 0; pass < 2; pass++) {
+          ctx.strokeStyle = pass ? '#3a3a44' : '#0d0b14';
+          ctx.lineWidth = pass ? 1 : 3;
+          ctx.beginPath();
+          for (let i = 0; i <= STEPS; i++) {
+            const u = i / STEPS;
+            const th = u * COILS * Math.PI * 2;
+            const grip = Math.sin(Math.PI * u);
+            // the cos term leans each loop along the lead, which is what closes it
+            const along = u * r + Math.cos(th) * axial * grip;
+            const off = Math.sin(th) * AMP * grip;
+            const qx = f.x + cx2 * along + nx2 * off;
+            const qy = f.y + cy2 * along + ny2 * off;
+            if (i === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
+          }
+          ctx.stroke();
+        }
+      };
+      for (let g = 1; g >= 0; g--) coil(ang - g * 0.3, g === 0 ? 1 : 0.22);
+      ctx.globalAlpha = 1;
+
+      // the plug on the end: black collar, metal barrel, laid along the lead
+      const ux = Math.cos(ang), uy = Math.sin(ang);
+      const pbx = Math.round(tipX - ux * 3), pby = Math.round(tipY - uy * 3);
+      ctx.strokeStyle = '#0d0b14';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(pbx, pby); ctx.lineTo(Math.round(tipX), Math.round(tipY));
+      ctx.stroke();
+      ctx.strokeStyle = '#c9c4b4';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pbx + ux, pby + uy); ctx.lineTo(Math.round(tipX), Math.round(tipY));
+      ctx.stroke();
+    }
+  }
+
+  // where Mike's companion sprite currently is (also used as his synth's firing origin)
+  function companionPos(lag = 14) {
+    const idx = trail.length - 1 - lag;
+    return idx >= 0 ? trail[idx] : (trail.length ? trail[0] : { x: player.x, y: player.y, facing: 'down' });
+  }
+
+  function update(dt) {
+    if (phase === 'toast') {
+      toastTimer -= dt;
+      if (toastTimer <= 0) finishToast();
+      return;
+    }
+    if (phase === 'win') { winClock += dt; return; }   // the curtain call runs itself
+    if (phase !== 'play') return;
+
+    if (stunned > 0) stunned -= dt;
+    const rooted = stunned > 0;
+
+    let ix = 0, iy = 0;
+    if (!rooted) {
+      if (keys.left) ix -= 1;
+      if (keys.right) ix += 1;
+      if (keys.up) iy -= 1;
+      if (keys.down) iy += 1;
+    }
+    const ilen = Math.hypot(ix, iy);
+    if (ilen > 0) { ix /= ilen; iy /= ilen; }
+
+    // On the attendant's soap you keep going for a moment after you stop pushing.
+    // Off it, drift is set straight from the input, so ordinary movement is unchanged.
+    if (slipTimer > 0) {
+      const k = Math.min(1, dt * 2.4);
+      player.driftX += (ix - player.driftX) * k;
+      player.driftY += (iy - player.driftY) * k;
+    } else {
+      player.driftX = ix;
+      player.driftY = iy;
+    }
+    const mx = player.driftX, my = player.driftY;
+    player.moving = Math.hypot(mx, my) > 0.1;
+
+    if (player.moving) {
+      if (Math.abs(my) >= Math.abs(mx)) player.facing = my > 0 ? 'down' : 'up';
+      else player.facing = mx > 0 ? 'right' : 'left';
+
+      tryMove(mx * player.speed * dt, 0);
+      tryMove(0, my * player.speed * dt);
+
+      player.animTimer += dt;
+      if (player.animTimer > 0.16) { player.animTimer = 0; player.animFrame = 1 - player.animFrame; }
+    } else {
+      player.animFrame = 0;
+      player.animTimer = 0;
+    }
+
+    if (invuln > 0) invuln -= dt;
+    if (player.attackCooldown > 0) player.attackCooldown -= dt;
+    if (player.attackTimer > 0) player.attackTimer -= dt;
+    if (!rooted && keys.attack && player.attackCooldown <= 0) {
+      if (player.weaponItem) tryAttack(); else tryShove();
+    }
+
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      // the clock covers the whole run, so it running out ends the run
+      timeLeft = 0;
+      phase = 'gameover';
+      return;
+    }
+
+    for (const en of stage.enemies) {
+      updateEnemy(en, dt);
+      if (invuln <= 0 && rectsOverlap(player, en) && hurtPlayer(1.0)) return;
+    }
+
+    for (const b of stage.bosses) {
+      updateBoss(b, dt);
+      if (invuln <= 0 && rectsOverlap(player, b) && hurtPlayer(1.2)) return;
+    }
+    if (phase !== 'play') return;      // a lash or a barge may have ended it mid-loop
+
+    // ground left behind: soap makes you slide, glass and grease fire take a life
+    if (slipTimer > 0) slipTimer -= dt;
+    const hcx = player.x + player.w / 2, hcy = player.y + player.h / 2;
+    for (const hz of hazards) {
+      hz.life -= dt;
+      if (hz.life <= 0 || Math.hypot(hcx - hz.x, hcy - hz.y) > hz.r) continue;
+      if (hz.kind === 'soap') slipTimer = 0.9;
+      else if (invuln <= 0 && hurtPlayer(1.0)) return;
+    }
+    for (let i = hazards.length - 1; i >= 0; i--) if (hazards[i].life <= 0) hazards.splice(i, 1);
+
+    for (const la of lashes) la.life -= dt;
+    for (let i = lashes.length - 1; i >= 0; i--) if (lashes[i].life <= 0) lashes.splice(i, 1);
+    if (melUnlocked) updateMel(dt);
+    updateHealZone(dt);
+
+    // Thrown things stop at the first wall and cost a life on contact. A bottle or a
+    // pan also leaves its mess behind wherever it comes down.
+    for (const bo of bolts) {
+      if (bo.landed) continue;
+      bo.x += bo.vx * dt;
+      bo.y += bo.vy * dt;
+      bo.life -= dt;
+      let stop = bo.life <= 0 || isSolidPixel(bo.x, bo.y);
+      if (!stop && invuln <= 0 &&
+          rectsOverlap(player, { x: bo.x - 7, y: bo.y - 5, w: 14, h: 10 })) {
+        stop = true;
+        if (hurtPlayer(1.1)) return;
+      }
+      if (!stop) continue;
+      bo.landed = true;
+      bo.life = 0;
+      if (bo.leaves && hazards.length < 14) {
+        const long = bo.leaves === 'fire';
+        hazards.push({
+          x: bo.x, y: bo.y, r: long ? 17 : 14, kind: bo.leaves,
+          life: long ? 4.5 : 3.5, max: long ? 4.5 : 3.5,
+        });
+      }
+    }
+    for (let i = bolts.length - 1; i >= 0; i--) if (bolts[i].life <= 0) bolts.splice(i, 1);
+
+    for (const wv of waves) {
+      wv.r += 150 * dt;
+      wv.life -= dt * 0.85;
+      if (invuln > 0 || wv.life <= 0) continue;
+      const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+      const d = Math.hypot(pcx - wv.x, pcy - wv.y);
+      if (Math.abs(d - wv.r) < 6) {
+        invuln = 1.2;
+        stunned = 1.6;                       // rooted in place, can't move or swing
+        timeLeft = Math.max(0, timeLeft - 6);
+      }
+    }
+    for (let i = waves.length - 1; i >= 0; i--) {
+      if (waves[i].life <= 0 || waves[i].r > waves[i].max) waves.splice(i, 1);
+    }
+
+    if (stage.hasMike && !mikeUnlocked && !stage.mikeFound) {
+      const mikeBox = { x: stage.mikeCol * TILE, y: stage.mikeRow * TILE, w: 14, h: 16 };
+      if (rectsOverlap(player, mikeBox)) {
+        mikeUnlocked = true;
+        stage.mikeFound = true;
+        showToast('MIKE JOINS! HIS SYNTH FIRES AT ENEMIES', 1.6, null);
+        return;
+      }
+    }
+
+    if (!stage.collected) {
+      const itemBox = { x: stage.itemCol * TILE, y: stage.itemRow * TILE, w: TILE, h: TILE };
+      if (rectsOverlap(player, itemBox)) {
+        stage.collected = true;
+        itemsCollected[stage.index] = true;
+        player.weaponItem = stage.item;
+        const how = RANGED_ITEMS.has(stage.item) ? 'SPACE TO THROW' : 'SPACE TO ATTACK';
+        const joinsNow = !melUnlocked
+          && itemsCollected.filter(Boolean).length >= MEL_UNLOCK_AT;
+        if (joinsNow) { melUnlocked = true; placeMel(); }
+        showToast(`GOT THE ${ITEM_LABEL[stage.item]}! (${how})`, 1.4,
+          joinsNow
+            ? () => showToast("MEL'S LOOSE IN THE VENUE - FIND HER BASS BOOST TO HEAL", 2.1, null)
+            : null);
+        return;
+      }
+    }
+
+    if (!stage.doorTriggered && doorOpen() && rectsOverlap(player, doorBoxOf())) {
+      stage.doorTriggered = true;
+      triggerDoor();
+      return;
+    }
+
+    if (mikeUnlocked || melUnlocked) {
+      trail.push({ x: player.x, y: player.y, facing: player.facing });
+      if (trail.length > 200) trail.shift();
+
+      mikeFireTimer -= dt;
+      if (mikeUnlocked && mikeFireTimer <= 0 && stage.enemies.length > 0) {
+        mikeFireTimer = 1.4 + Math.random() * 0.6;
+        const origin = companionPos();
+        const target = stage.enemies[0];
+        const ox = origin.x + player.w / 2, oy = origin.y + player.h / 2;
+        const tx = target.x + target.w / 2, ty = target.y + target.h / 2;
+        const ang = Math.atan2(ty - oy, tx - ox);
+        notes.push({ x: ox, y: oy, vx: Math.cos(ang) * 90, vy: Math.sin(ang) * 90, life: 2 });
+      }
+    }
+
+    for (const n of notes) updateNote(n, dt);
+    for (const n of notes) {
+      if (n.life <= 0) continue;
+      for (const en of stage.enemies) {
+        if (n.x > en.x && n.x < en.x + en.w && n.y > en.y && n.y < en.y + en.h) {
+          en.hp -= 1;
+          en.knock = 0.15;
+          n.life = 0;
+          break;
+        }
+      }
+    }
+    for (let i = notes.length - 1; i >= 0; i--) if (notes[i].life <= 0) notes.splice(i, 1);
+
+    for (const s of shots) {
+      updateNote(s, dt);
+      // a thrown item stops at the first wall it meets
+      if (s.life > 0 && isSolidPixel(s.x, s.y)) s.life = 0;
+    }
+    for (const s of shots) {
+      if (s.life <= 0) continue;
+      for (const en of stage.enemies) {
+        if (s.hit.includes(en)) continue;
+        if (s.x > en.x && s.x < en.x + en.w && s.y > en.y && s.y < en.y + en.h) {
+          damageEnemy(en, s.dmg, s.knock, s.x - s.vx * 0.02, s.y - s.vy * 0.02);
+          if (s.pierce) s.hit.push(en);   // guitar ploughs straight through the line
+          else { s.life = 0; break; }
+        }
+      }
+      for (const b of stage.bosses.slice()) {
+        if (s.life <= 0 || s.hit.includes(b)) continue;
+        if (s.x > b.x && s.x < b.x + b.w && s.y > b.y && s.y < b.y + b.h) {
+          damageBoss(b, s.dmg, s.knock, s.x - s.vx * 0.02, s.y - s.vy * 0.02);
+          if (s.pierce) s.hit.push(b); else s.life = 0;
+        }
+      }
+    }
+    for (let i = shots.length - 1; i >= 0; i--) if (shots[i].life <= 0) shots.splice(i, 1);
+
+    for (const f of fx) f.life -= dt;
+    for (let i = fx.length - 1; i >= 0; i--) if (fx[i].life <= 0) fx.splice(i, 1);
+
+    pruneEnemies();
+    updateObjective(dt);
+  }
+
+  // Mike is the only friendly body in a room full of hostile ones, so he gets the
+  // band's mint colour as a halo — and, until you've collected him, a bobbing marker.
+  function drawAllyGlow(cx, cy, radius, strength) {
+    const pulse = 0.55 + 0.2 * Math.sin(performance.now() / 320);
+    const g = ctx.createRadialGradient(cx, cy, 1, cx, cy, radius);
+    g.addColorStop(0, `rgba(159, 240, 203, ${strength * pulse})`);
+    g.addColorStop(0.6, `rgba(159, 240, 203, ${strength * pulse * 0.35})`);
+    g.addColorStop(1, 'rgba(159, 240, 203, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function drawHoverArrow(cx, topY, tint = '#feffa3') {
+    const y = Math.round(topY - 10 + Math.sin(performance.now() / 260) * 2);
+    ctx.fillStyle = COLOR.outline;
+    ctx.fillRect(cx - 4, y - 1, 9, 1);
+    ctx.fillStyle = tint;
+    for (let i = 0; i < 4; i++) ctx.fillRect(cx - 3 + i, y + i, 7 - i * 2, 1);
+  }
+
+  // ---------- Mel doesn't follow you. She tears around the room keeping her
+  // distance — further and faster every stage — and only stands still for the length
+  // of a bass blast. Tracking her down is half the cost of the heal. ----------
+  function melSpeed()    { return 74 + stage.index * 14; }   //  74 .. 144 px/s
+  function melKeepAway() { return 44 + stage.index * 22; }   //  44 .. 154 px
+
+  function openTile(col, row) {
+    const ch = tileAt(col, row);
+    return ch !== 'D' && ch !== 'G' && !SOLID.has(ch);
+  }
+  function pickMelTarget() {
+    for (let tries = 0; tries < 40; tries++) {
+      const col = 1 + Math.floor(Math.random() * (COLS - 2));
+      const row = 1 + Math.floor(Math.random() * (ROWS - 2));
+      if (!openTile(col, row)) continue;
+      const x = col * TILE + 2, y = row * TILE + 2;
+      if (Math.hypot(x - player.x, y - player.y) < melKeepAway()) continue;
+      mel.tx = x; mel.ty = y;
+      return;
+    }
+    mel.tx = mel.x; mel.ty = mel.y;
+  }
+  function placeMel() {
+    mel.x = player.x; mel.y = player.y;
+    for (let tries = 0; tries < 200; tries++) {
+      const col = 1 + Math.floor(Math.random() * (COLS - 2));
+      const row = 1 + Math.floor(Math.random() * (ROWS - 2));
+      if (!openTile(col, row)) continue;
+      const x = col * TILE + 2, y = row * TILE + 2;
+      if (Math.hypot(x - player.x, y - player.y) < melKeepAway() + 40) continue;
+      mel.x = x; mel.y = y;
+      break;
+    }
+    mel.vx = 0; mel.vy = 0; mel.retarget = 0;
+    mel.trail.length = 0;
+    mel.mark = 0;
+    pickMelTarget();
+  }
+  function updateMel(dt) {
+    if (healZone) { mel.vx = 0; mel.vy = 0; return; }   // planted for the blast
+    const speed = melSpeed();
+    const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+    const mcx = mel.x + player.w / 2, mcy = mel.y + player.h / 2;
+
+    mel.retarget -= dt;
+    let ax, ay;
+    if (Math.hypot(pcx - mcx, pcy - mcy) < melKeepAway()) {
+      // you got close — she peels away on a curve rather than a straight line, which
+      // also keeps her from pinning herself against a wall
+      const a = Math.atan2(mcy - pcy, mcx - pcx) + 0.6;
+      ax = Math.cos(a); ay = Math.sin(a);
+    } else {
+      if (mel.retarget <= 0 ||
+          Math.hypot(mel.tx - mel.x, mel.ty - mel.y) < 10) {
+        pickMelTarget();
+        mel.retarget = 1.6 + Math.random() * 1.4;
+      }
+      ax = mel.tx - mel.x; ay = mel.ty - mel.y;
+    }
+    const len = Math.hypot(ax, ay) || 1;
+    mel.vx = (ax / len) * speed;
+    mel.vy = (ay / len) * speed;
+    if (Math.abs(mel.vy) >= Math.abs(mel.vx)) mel.facing = mel.vy > 0 ? 'down' : 'up';
+    else mel.facing = mel.vx > 0 ? 'right' : 'left';
+
+    const nx = mel.x + mel.vx * dt, ny = mel.y + mel.vy * dt;
+    if (!isSolidPixel(nx + (mel.vx > 0 ? player.w - 1 : 0), mel.y + player.h / 2)) mel.x = nx;
+    else mel.retarget = 0;
+    if (!isSolidPixel(mel.x + player.w / 2, ny + (mel.vy > 0 ? player.h - 1 : 0))) mel.y = ny;
+    else mel.retarget = 0;
+    mel.x = Math.max(TILE, Math.min(MAP_W - TILE - player.w, mel.x));
+    mel.y = Math.max(TILE, Math.min(MAP_H - TILE - player.h, mel.y));
+
+    // She leaves a low mint wake behind her. It is a lead, not a marker: it says which
+    // way she went a second ago, not where she is now.
+    // Footprints rather than a glow smear: they read on a pale bathroom tile as well
+    // as on the dive bar's black floor, and they say which way she went.
+    mel.mark += dt;
+    if (mel.mark > 0.13) {
+      mel.mark = 0;
+      mel.step = !mel.step;
+      const ang = Math.atan2(mel.vy, mel.vx);
+      const side = mel.step ? 3 : -3;
+      mel.trail.push({
+        x: mel.x + player.w / 2 - Math.sin(ang) * side,
+        y: mel.y + player.h - 2 + Math.cos(ang) * side,
+        a: ang,
+      });
+      if (mel.trail.length > 14) mel.trail.shift();
+    }
+  }
+
+  function drawMelTrail() {
+    for (let i = 0; i < mel.trail.length; i++) {
+      const t = (i + 1) / mel.trail.length;
+      const p = mel.trail[i];
+      ctx.save();
+      ctx.translate(Math.round(p.x), Math.round(p.y));
+      ctx.rotate(p.a + Math.PI / 2);
+      ctx.globalAlpha = 0.7 * t * t;
+      ctx.fillStyle = '#1f5c46';            // dark core, so it holds on light floors
+      ctx.fillRect(-1.5, -2.5, 4, 5);
+      ctx.globalAlpha = 0.85 * t * t;
+      ctx.fillStyle = '#9ff0cb';
+      ctx.fillRect(-1, -2, 3, 3);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // The bass boost heals only while you stand in it, then fades and has to recharge.
+  // It drops wherever Mel happens to be, so you have to go and find it.
+  function updateHealZone(dt) {
+    if (!melUnlocked) return;
+
+    if (healZone) {
+      healZone.life -= dt;
+      const pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+      const inside = Math.hypot(pcx - healZone.x, pcy - healZone.y) <= MEL_ZONE_RADIUS;
+      if (inside) {
+        healZone.tick -= dt;
+        if (healZone.tick <= 0) {
+          healZone.tick = MEL_HEAL_EVERY;
+          if (hitsTaken > 0) {
+            hitsTaken -= 1;
+            addFx('heal', pcx, pcy, 'up', 0, 0.7);
+          }
+        }
+      } else {
+        healZone.tick = MEL_HEAL_EVERY;   // step out and the count starts over
+      }
+      if (healZone.life <= 0) {
+        healZone = null;
+        melZoneCooldown = MEL_ZONE_COOLDOWN;
+      }
+      return;
+    }
+
+    melZoneCooldown -= dt;
+    if (melZoneCooldown <= 0 && hitsTaken > 0) {
+      healZone = {
+        x: mel.x + player.w / 2, y: mel.y + player.h / 2,
+        life: MEL_ZONE_DURATION, tick: MEL_HEAL_EVERY,
+      };
+      objectiveOverride = "MEL'S BASS BOOST IS UP";
+      objectiveOverrideTimer = 2.6;
+    }
+  }
+
+  // Every ring here stops at MEL_ZONE_RADIUS, because that is where the healing
+  // stops. An earlier version drew a halo well past the edge and made the boost feel
+  // like it only worked dead centre.
+  function drawHealZone(z) {
+    const fade = Math.min(1, z.life);            // dims as it expires
+    ctx.globalAlpha = 0.2 * fade;
+    ctx.fillStyle = '#9ff0cb';
+    ctx.beginPath(); ctx.arc(z.x, z.y, MEL_ZONE_RADIUS, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.9 * fade;
+    ctx.strokeStyle = '#9ff0cb';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(z.x, z.y, MEL_ZONE_RADIUS, 0, Math.PI * 2); ctx.stroke();
+    // a pulse travelling out to that same edge, so the boundary reads as the boundary
+    const cycle = (performance.now() / 900) % 1;
+    ctx.globalAlpha = 0.5 * fade * (1 - cycle);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, MEL_ZONE_RADIUS * (0.15 + 0.85 * cycle), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMelCompanion() {
+    const key = (mel.facing === 'left' || mel.facing === 'right') ? 'side' : mel.facing;
+    const grid = MEL_SPRITES[key];
+    const flip = mel.facing === 'left';
+    const w = grid[0].length, h = grid.length;
+    const dx = Math.round(mel.x + player.w / 2 - w / 2);
+    const dy = Math.round(mel.y + player.h - h);
+    drawAllyGlow(dx + w / 2, dy + h / 2, 16, 0.3);
+    if (mel.facing === 'up') {
+      drawSprite(grid, dx, dy, flip, MEL_PALETTE);
+      drawBassProp(dx, dy, flip);
+    } else {
+      drawBassProp(dx, dy, flip);
+      drawSprite(grid, dx, dy, flip, MEL_PALETTE);
+    }
+  }
+
+  function drawMikeNPC() {
+    const x = stage.mikeCol * TILE, y = stage.mikeRow * TILE - 2;
+    const grid = MIKE_SPRITES.down;
+    const w = grid[0].length, h = grid.length;
+    drawAllyGlow(x + w / 2, y + h / 2, 22, 0.45);
+    drawSprite(grid, x, y, false, MIKE_PALETTE);
+    drawSynthProp(x, y, false);
+    drawHoverArrow(Math.round(x + w / 2), y);
+  }
+  function drawCompanion() {
+    const pos = companionPos();
+    const key = (pos.facing === 'left' || pos.facing === 'right') ? 'side' : pos.facing;
+    const grid = MIKE_SPRITES[key];
+    const flip = pos.facing === 'left';
+    const spriteW = grid[0].length, spriteH = grid.length;
+    const dx = Math.round(pos.x + player.w / 2 - spriteW / 2);
+    const dy = Math.round(pos.y + player.h - spriteH);
+    // fainter once he's following you — enough to tell him from a bouncer at a glance
+    drawAllyGlow(dx + spriteW / 2, dy + spriteH / 2, 16, 0.3);
+    drawSprite(grid, dx, dy, flip, MIKE_PALETTE);
+    drawSynthProp(dx, dy, flip);
+  }
+
+  function drawPlayer() {
+    if (invuln > 0 && Math.floor(performance.now() / 100) % 2 === 0) return;
+    const key = (player.facing === 'left' || player.facing === 'right') ? 'side' : player.facing;
+    const grid = PLAYER_SPRITES[key][player.animFrame];
+    const flip = player.facing === 'left';
+    const bob = (player.moving && player.animFrame === 1) ? -1 : 0;
+    const spriteW = grid[0].length;
+    const spriteH = grid.length;
+    const dx = Math.round(player.x + player.w / 2 - spriteW / 2);
+    const dy = Math.round(player.y + player.h - spriteH + bob);
+    // seen from behind the guitar is ON his back, so it draws last; every other
+    // facing puts it behind him
+    if (player.facing === 'up') {
+      drawSprite(grid, dx, dy, flip);
+      drawGuitarProp(dx, dy, flip);
+    } else {
+      drawGuitarProp(dx, dy, flip);
+      drawSprite(grid, dx, dy, flip);
+    }
+
+    if (stunned > 0) {
+      const t = performance.now() / 120;
+      ctx.fillStyle = '#feffa3';
+      for (let i = 0; i < 3; i++) {
+        const a = t + (i / 3) * Math.PI * 2;
+        ctx.fillRect(Math.round(dx + spriteW / 2 + Math.cos(a) * 7) - 1,
+                     Math.round(dy - 4 + Math.sin(a) * 2.5) - 1, 2, 2);
+      }
+    }
+
+  }
+
+  // ---------- the objective banner: large, glowing, and always answering
+  // "what am I meant to be doing?" — it names the item, the guard in the way, or
+  // the exit, and flares up whenever that answer changes ----------
+  function objectiveText() {
+    if (!stage.collected) return 'FIND THE ' + ITEM_LABEL[stage.item];
+    const g = gatingBoss();
+    if (g) return 'BEAT ' + BOSS_KINDS[g.kind].label;
+    return 'GET TO THE DOOR';
+  }
+  function updateObjective(dt) {
+    if (objectiveOverrideTimer > 0) objectiveOverrideTimer -= dt;
+    const next = objectiveText();
+    if (next !== objective) { objective = next; objectiveFlash = 2; }
+    if (objectiveFlash > 0) objectiveFlash -= dt;
+  }
+  function drawObjectiveBanner() {
+    const showing = objectiveOverrideTimer > 0 ? objectiveOverride : objective;
+    if (!showing) return;
+    const boost = objectiveOverrideTimer > 0 ? 1 : Math.max(0, objectiveFlash / 2);
+    const maxW = BASE_W - 28;
+    let fontPx = Math.round(11 + boost * 5);
+    let lines = [showing];
+    while (fontPx > 8 && measureAt(showing, fontPx) > maxW) fontPx -= 1;
+    if (measureAt(showing, fontPx) > maxW) {
+      // rather than shrink a long objective past readable on a narrow screen, break it
+      const words = showing.split(' ');
+      const mid = Math.ceil(words.length / 2);
+      lines = [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+      fontPx = Math.round(10 + boost * 4);
+      while (fontPx > 6 && lines.some((l) => measureAt(l, fontPx) > maxW)) fontPx -= 1;
+    }
+    const lineH = fontPx + 3;
+    const w = lines.reduce((m, l) => Math.max(m, measureAt(l, fontPx)), 0);
+    const cx = BASE_W / 2, y = HUD_H + 6;
+    ctx.fillStyle = 'rgba(10,6,20,0.5)';
+    ctx.fillRect(cx - w / 2 - 8, y - 4, w + 16, lines.length * lineH + 8);
+    ctx.save();
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = boost > 0 ? '#feffa3' : '#9ff0cb';
+    ctx.shadowBlur = 7 + boost * 11;
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 250);   // slow blink
+    ctx.fillStyle = boost > 0 ? '#feffa3' : '#9ff0cb';
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], cx, y + i * lineH);
+      ctx.fillText(lines[i], cx, y + i * lineH);   // a second pass thickens the glow
+    }
+    ctx.restore();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+  }
+  // once the way out is open, ring it so it reads from across the room
+  function drawExitMarker() {
+    if (!doorOpen() || !gatesOpen()) return;
+    const d = doorBoxOf();
+    ctx.globalAlpha = 0.35 + 0.35 * Math.sin(performance.now() / 220);
+    ctx.strokeStyle = '#9ff0cb';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(d.x - 1, d.y - 1, d.w + 2, d.h + 2);
+    ctx.globalAlpha = 1;
+  }
+  // ---------- HUD / story overlays ----------
+  // Portrait has 180px to work with instead of 320, so the type drops a size and the
+  // life pips get their own row rather than sharing one with the weapon.
+  function drawHUD() {
+    const tight = layoutName === 'portrait';
+    ctx.fillStyle = 'rgba(10,6,20,0.55)';
+    ctx.fillRect(0, 0, BASE_W, HUD_H);
+    ctx.font = `${tight ? 6 : 8}px "Press Start 2P", monospace`;
+    ctx.textBaseline = 'top';
+    const rowA = tight ? 3 : 4, rowB = tight ? 13 : 14;
+    const weaponTag = player.weaponItem ? ` ${ITEM_LABEL[player.weaponItem]}` : '';
+    ctx.fillStyle = '#f0eef5';
+    ctx.fillText(`${stage.index + 1}/6 ${stage.title}`, 4, rowA);
+    ctx.fillStyle = '#9ff0cb';
+    ctx.fillText(`${tight ? 'FOES' : 'ENEMIES'}:${stage.enemies.length}${weaponTag}`, 4, rowB);
+    const secs = Math.max(0, Math.ceil(timeLeft));
+    ctx.fillStyle = timeLeft <= 30 ? '#e8734a' : '#f0eef5';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} min`,
+                 BASE_W - 4, rowA);
+    ctx.textAlign = 'left';
+    const total = maxLives();
+    const lives = total - hitsTaken;
+    const pipGap = tight ? 8 : 9;
+    const startX = BASE_W - 5 - (total - 1) * pipGap;
+    for (let i = 0; i < total; i++) drawLifePip(startX + i * pipGap, tight ? 23 : 18, i < lives);
+  }
+  // each life is a side-profile air-hockey handle: flat puck base, slim rounded-top grip
+  function drawLifePip(x, y, alive) {
+    const base = alive ? '#eae7f2' : '#4a4766';
+    const grip = alive ? '#e8734a' : '#3a3752';
+    ctx.fillStyle = base;
+    ctx.fillRect(x - 4, y + 3, 9, 2);
+    ctx.fillStyle = grip;
+    ctx.fillRect(x - 1, y - 1, 3, 4);
+    ctx.beginPath();
+    ctx.arc(x + 0.5, y - 1, 1.5, Math.PI, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  // ---------- text that always fits its box: wraps by word, then shrinks if it still doesn't fit ----------
+  function measureAt(text, fontPx) {
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    return ctx.measureText(text).width;
+  }
+  function wrapLines(rawLines, maxWidth, fontPx) {
+    const out = [];
+    for (const raw of rawLines) {
+      if (raw === '') { out.push(''); continue; }
+      const words = raw.split(' ');
+      let cur = '';
+      for (const word of words) {
+        const test = cur ? `${cur} ${word}` : word;
+        if (measureAt(test, fontPx) <= maxWidth || !cur) cur = test;
+        else { out.push(cur); cur = word; }
+      }
+      out.push(cur);
+    }
+    return out;
+  }
+  function drawTextBlock(lines, boxX, boxY, boxW, boxH, borderColor, reserveBottom = 0) {
+    ctx.fillStyle = 'rgba(10,6,20,0.85)';
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+    const padX = 12, padY = 12;
+    const maxWidth = boxW - padX * 2;
+    const maxHeight = boxH - padY * 2 - reserveBottom;
+
+    let fontPx = 8, lineHeight = 14;
+    let wrapped = wrapLines(lines, maxWidth, fontPx);
+    while (fontPx > 5 && (wrapped.length * lineHeight > maxHeight || wrapped.some((l) => measureAt(l, fontPx) > maxWidth))) {
+      fontPx -= 1;
+      lineHeight = fontPx + 6;
+      wrapped = wrapLines(lines, maxWidth, fontPx);
+    }
+
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    ctx.fillStyle = '#f0eef5';
+    ctx.textBaseline = 'top';
+    wrapped.forEach((line, i) => ctx.fillText(line, boxX + padX, boxY + padY + i * lineHeight));
+    return { fontPx, lineHeight, lineCount: wrapped.length, boxX, boxY, padX, padY };
+  }
+  // draws a prompt line right under whatever drawTextBlock actually rendered, so it never overlaps
+  function drawPromptBelow(info, text, color) {
+    ctx.font = `${info.fontPx}px "Press Start 2P", monospace`;
+    ctx.fillStyle = color;
+    ctx.fillText(text, info.boxX + info.padX, info.boxY + info.padY + info.lineCount * info.lineHeight + 8);
+  }
+  function drawFittedCenter(text, cx, y, maxWidth, startFontPx, color) {
+    let fontPx = startFontPx;
+    while (fontPx > 5 && measureAt(text, fontPx) > maxWidth) fontPx -= 1;
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, cx, y);
+    ctx.textAlign = 'left';
+  }
+  function drawToastBox() {
+    const bw = Math.min(268, BASE_W - 16), bh = 44;
+    const bx = Math.round((BASE_W - bw) / 2), by = Math.round((BASE_H - bh) / 2);
+    ctx.fillStyle = 'rgba(10,6,20,0.8)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#f0eef5';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    const maxWidth = bw - 24;
+    let fontPx = 8, lineHeight = 12;
+    let wrapped = wrapLines([toastMsg], maxWidth, fontPx);
+    while (fontPx > 5 && (wrapped.length * lineHeight > bh - 16 || wrapped.some((l) => measureAt(l, fontPx) > maxWidth))) {
+      fontPx -= 1;
+      lineHeight = fontPx + 4;
+      wrapped = wrapLines([toastMsg], maxWidth, fontPx);
+    }
+
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#f0eef5';
+    const totalH = wrapped.length * lineHeight;
+    const startY = by + bh / 2 - totalH / 2 + lineHeight / 2;
+    wrapped.forEach((line, i) => ctx.fillText(line, BASE_W / 2, startY + i * lineHeight));
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+  }
+  // the intro and game-over panels, inset from whichever screen is in play
+  function storyBox() {
+    const m = layoutName === 'portrait' ? 8 : 20;
+    return { x: m, y: HUD_H + 8, w: BASE_W - m * 2, h: BASE_H - HUD_H - 26 };
+  }
+  function drawIntroBox() {
+    const lines = [
+      'AIRHOCKEY', '',
+      'DOORS OPEN SOON AND', 'MEL IS MISSING.', '',
+      'SEBASTIAN MUST FIND', 'HIS GEAR ACROSS THE', 'VENUE BEFORE SHOWTIME.',
+    ];
+    const info = drawTextBlock(lines, storyBox().x, storyBox().y, storyBox().w, storyBox().h,
+                               '#9ff0cb', 16);
+    if (Math.floor(performance.now() / 500) % 2 === 0) drawPromptBelow(info, 'PRESS ENTER / TAP', '#feffa3');
+  }
+  function drawGameOverBox() {
+    const lines = [
+      'GAME OVER', '',
+      timeLeft <= 0 ? 'DOORS OPENED WITHOUT YOU' : 'TAKEN DOWN IN THE',
+      `${stage.title}.`, '',
+      `GEAR RECOVERED: ${itemsCollected.filter(Boolean).length}/6`,
+    ];
+    const info = drawTextBlock(lines, storyBox().x, storyBox().y, storyBox().w, storyBox().h,
+                               '#e8734a', 16);
+    drawPromptBelow(info, 'PRESS R / TAP TO RETRY', '#feffa3');
+  }
+  // A five-piece seen head-on: hi-hat and crash on stands, two rack toms over the
+  // kick, snare to the player's left. Drawn after the drummer so he sits behind it.
+  function drawDrumKit(cx, baseY) {
+    const shellA = '#8c1c1c', shellB = '#5a1010';
+    const head = '#efe9dc', rim = '#c9c4b4', hw = '#9aa5ac', brass = '#d9b64a';
+
+    function stand(x, topY) {
+      ctx.strokeStyle = hw;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, baseY); ctx.lineTo(x, topY);
+      ctx.moveTo(x - 4, baseY); ctx.lineTo(x, baseY - 6); ctx.lineTo(x + 4, baseY);
+      ctx.stroke();
+    }
+    function cymbal(x, y, r) {
+      ctx.fillStyle = brass;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#8a6a20'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    function drum(x, y, r, tilt) {
+      ctx.fillStyle = shellB;
+      ctx.beginPath(); ctx.ellipse(x, y + 1, r, r * tilt, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = head;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * tilt, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = rim; ctx.lineWidth = 1; ctx.stroke();
+    }
+
+    // cymbals behind the drums
+    stand(cx - 26, baseY - 30); cymbal(cx - 26, baseY - 30, 9);
+    stand(cx + 26, baseY - 34); cymbal(cx + 26, baseY - 34, 10);
+
+    // rack toms angled toward the player
+    drum(cx - 8, baseY - 16, 6, 0.55);
+    drum(cx + 8, baseY - 16, 6, 0.55);
+
+    // snare on its stand
+    stand(cx - 21, baseY - 10);
+    drum(cx - 21, baseY - 11, 6, 0.5);
+
+    // kick drum front and centre, with the band initial on the head
+    ctx.fillStyle = head;
+    ctx.beginPath(); ctx.arc(cx, baseY - 9, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = shellA; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = shellA;
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('a', cx, baseY - 8);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+  }
+
+  // ---------- the curtain call ----------
+  // 16x19 field sprites scaled to 20x24 so nobody looks like a child beside the kit
+  const BAND_SCALE = 1.25;
+  // Mike is a missable walk-over pickup, so the finale gives him a second chance: he
+  // steps out of the wings at MIKE_LATE_AT and takes MIKE_WALK_TIME to reach his spot.
+  const MIKE_LATE_AT = 1.6, MIKE_WALK_TIME = 1.8;
+  // Seated at the kit his raised sticks are replaced by the pair he is actually
+  // playing with, so they come out of the sprite before it goes on the riser.
+  const DRUMMER_SEATED = DRUMMER_SHAPE.map((r) => r.replace(/Y/g, '.'));
+
+  // has Mike finished his walk-on? Everything about the closing line hangs off this
+  function mikeOnStage() {
+    return mikeUnlocked || winClock >= MIKE_LATE_AT + MIKE_WALK_TIME;
+  }
+  // Six endings out of two optional band members, and the line has to change under
+  // Mike the moment he actually walks on. Kept short: drawFittedCenter shrinks to fit
+  // rather than wrapping, and the portrait screen is only 180 wide.
+  function finaleLine() {
+    if (!mikeOnStage()) {
+      return drummerTamed ? 'MEL, SEB AND A DRUMMER' : 'SEBASTIAN & MEL ON STAGE';
+    }
+    if (mikeUnlocked) {
+      return drummerTamed ? 'THE WHOLE BAND, DRUMMER TOO' : 'THE FULL BAND TAKES OVER';
+    }
+    return drummerTamed ? 'MIKE MADE IT - DRUMMER TOO' : 'MIKE SLIPS IN LATE';
+  }
+
+  // the riser deck, which is there in both endings
+  function drawRiserDeck(cx, riserY) {
+    ctx.fillStyle = '#2c2140';
+    ctx.fillRect(cx - 32, riserY - 18, 64, 18);
+    ctx.fillStyle = '#7a5230';
+    ctx.fillRect(cx - 32, riserY - 19, 64, 2);
+  }
+
+  // His forearms and sticks, drawn after the kit so they cross in front of it -- the
+  // sticks are the whole read of the pose and the kick drum swallows them otherwise.
+  // Left hand over the snare, right over the rack tom, both nodding on a slow sine.
+  function drawDrumsticks(cx, baseY) {
+    const nod = Math.sin(performance.now() / 150) * 2.5;
+    // Each stick starts at a hand the sprite already has -- no drawn forearm, or it
+    // grows out of his jaw. Left hand down onto the snare, right hand up to the ride,
+    // so the pair reads as mid-bar rather than posed.
+    const sticks = [
+      { hx: cx - 8, hy: baseY - 23, tx: cx - 19, ty: baseY - 14 + nod },
+      { hx: cx + 7, hy: baseY - 23, tx: cx + 20, ty: baseY - 31 - nod },
+    ];
+    ctx.lineCap = 'round';
+    for (const st of sticks) {
+      // dark backing first: bare wood disappears against a drum head or a cymbal
+      ctx.strokeStyle = ENEMY_PALETTE.k;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(st.hx, st.hy); ctx.lineTo(st.tx, st.ty); ctx.stroke();
+      ctx.strokeStyle = ENEMY_PALETTE.Y;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(st.hx, st.hy); ctx.lineTo(st.tx, st.ty); ctx.stroke();
+      ctx.fillStyle = '#f0eef5';                  // tip catching a light
+      ctx.fillRect(Math.round(st.tx) - 1, Math.round(st.ty) - 1, 2, 2);
+    }
+    ctx.lineCap = 'butt';
+  }
+
+  // Walked past the drummer: the riser is still set, and all that is on it is his
+  // stool and the sticks he never came back for. This is the other ending, and it has
+  // to be visibly a different stage rather than the same one with a different caption.
+  function drawEmptyStool(cx, riserY) {
+    const seatY = riserY - 31;
+    ctx.strokeStyle = '#9aa5ac';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, riserY - 19); ctx.lineTo(cx, seatY);
+    ctx.lineTo(cx + 7, riserY - 19);
+    ctx.moveTo(cx, seatY); ctx.lineTo(cx, riserY - 19);
+    ctx.stroke();
+    ctx.fillStyle = '#3f2a1d';
+    ctx.beginPath(); ctx.ellipse(cx, seatY, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7a5230'; ctx.stroke();
+    ctx.strokeStyle = ENEMY_PALETTE.Y;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, seatY - 2); ctx.lineTo(cx + 5, seatY - 4);
+    ctx.moveTo(cx - 6, seatY);     ctx.lineTo(cx + 5, seatY - 2);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
+  // one row of audience-head silhouettes at a given depth (smaller/dimmer = farther back)
+  function drawAudienceRow(y, r, spacing, count, color, offsetX) {
+    ctx.fillStyle = color;
+    for (let i = 0; i < count; i++) {
+      const ax = offsetX + i * spacing;
+      ctx.beginPath();
+      ctx.arc(ax, y, r, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(ax - r, y, r * 2, r);
+    }
+  }
+  // completion cutscene: the band on stage in front of a crowd
+  function drawFinale() {
+    ctx.fillStyle = '#241a3d';
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+
+    // flashing 8-bit band logo, blinking on/off in the backdrop
+    if (logoImg.complete && logoImg.naturalWidth > 0 && Math.floor(performance.now() / 220) % 2 === 0) {
+      const logoW = Math.min(120, BASE_W - 48);
+      const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
+      ctx.drawImage(logoImg, BASE_W / 2 - logoW / 2, 58, logoW, logoH);
+    }
+
+    const t = performance.now() / 300;
+    const lightColors = ['#9ff0cb', '#eecbff', '#feffa3'];
+    for (let i = 0; i < 3; i++) {
+      ctx.globalAlpha = 0.15 + 0.1 * Math.sin(t + i);
+      ctx.fillStyle = lightColors[i];
+      const bx = BASE_W * (0.16 + i * 0.34);
+      const spread = BASE_W * 0.17;
+      ctx.beginPath();
+      ctx.moveTo(bx, 0);
+      ctx.lineTo(bx - spread, BASE_H * 0.62);
+      ctx.lineTo(bx + spread, BASE_H * 0.62);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const riserY = BASE_H - 66;
+    ctx.fillStyle = '#3f2a1d';
+    ctx.fillRect(0, riserY, BASE_W, 30);
+    ctx.fillStyle = '#7a5230';
+    ctx.fillRect(0, riserY, BASE_W, 3);
+
+
+    // The back riser, raised high enough that the kit clears the heads of the front
+    // line. Either the drummer is on it, or it is set up and empty -- the two endings
+    // this scene has to tell apart.
+    const riserCx = Math.round(BASE_W / 2);
+    drawRiserDeck(riserCx, riserY);
+    if (drummerTamed) {
+      // Seated behind the kit: him first, the kit over him, then his sticks over the
+      // kit. Three layers, because the sticks are the whole read of the pose and the
+      // kick drum swallows them if they go down with the rest of the sprite.
+      const dw = DRUMMER_SEATED[0].length, dh = DRUMMER_SEATED.length;
+      drawSpriteScaled(DRUMMER_SEATED, riserCx - Math.round(dw * BAND_SCALE / 2),
+                       riserY - 18 - Math.round(dh * BAND_SCALE) - 15,
+                       false, ENEMY_PALETTE, BAND_SCALE);
+      drawDrumKit(riserCx, riserY - 18);
+      drawDrumsticks(riserCx, riserY - 18);
+    } else {
+      drawEmptyStool(riserCx, riserY);
+    }
+
+    // The front line. Mike's place is held whether or not you found him: walk past him
+    // in the bathroom and he simply turns up late, jogging in from the wings, rather
+    // than the band closing ranks and never mentioning him.
+    const lineup = [
+      { sprite: MEL_SPRITE, pal: MEL_PALETTE, prop: drawBassProp },
+      { sprite: PLAYER_SPRITES.down[0], pal: SPRITE_PALETTE, prop: drawGuitarProp },
+      { sprite: MIKE_SPRITES.down, pal: MIKE_PALETTE, prop: drawSynthProp,
+        walkOn: MIKE_SPRITES.side, late: !mikeUnlocked },
+    ];
+    // With a kit on the riser, an odd-numbered line puts someone dead centre and their
+    // head clips the kick drum. Reserve a corridor for it and lay the band out around
+    // it, so the stage stays balanced instead of just shunted to one side. The empty
+    // stool needs a narrower corridor of its own.
+    const clearGap = drummerTamed ? 56 : 34;
+    const usable = BASE_W - clearGap;
+    const step = usable / (lineup.length + 1);
+    lineup.forEach((m, i) => {
+      let sprite = m.sprite, flip = false;
+      const sw = Math.round(m.sprite[0].length * BAND_SCALE);
+      const sh = Math.round(m.sprite.length * BAND_SCALE);
+      let slot = step * (i + 1);
+      if (clearGap && slot > usable / 2) slot += clearGap;
+      let x = Math.round(slot - sw / 2);
+      if (m.late) {
+        const walk = (winClock - MIKE_LATE_AT) / MIKE_WALK_TIME;
+        if (walk <= 0) return;                       // still out in the wings
+        if (walk < 1) {
+          const wings = BASE_W + 14;                 // off the right edge
+          x = Math.round(wings + (x - wings) * walk);
+          sprite = m.walkOn;
+          flip = true;                               // side sprites face right
+        }
+      }
+      const yy = riserY - sh;
+      drawSpriteScaled(sprite, x, yy, flip, m.pal, BAND_SCALE);
+      m.prop(x, yy, flip, BAND_SCALE);
+    });
+
+    // a packed crowd: three depth layers, drawn back-to-front so nearer heads occlude farther ones
+    drawAudienceRow(BASE_H - 18, 3.5, 20, Math.ceil(BASE_W / 20) + 1, 'rgba(16,12,28,0.65)', 4);
+    drawAudienceRow(BASE_H - 12, 4.5, 26, Math.ceil(BASE_W / 26) + 1, '#1c1730', 2);
+    drawAudienceRow(BASE_H - 6, 6, 32, Math.ceil(BASE_W / 32) + 1, '#100c1c', 10);
+
+    drawFittedCenter('SHOWTIME!', BASE_W / 2, 14, BASE_W - 40, 10, '#feffa3');
+    drawFittedCenter(finaleLine(), BASE_W / 2, 30, BASE_W - 40, 8, '#f0eef5');
+    drawFittedCenter('PRESS R / TAP TO REPLAY', BASE_W / 2, 44, BASE_W - 40, 8, '#9ff0cb');
+  }
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function frame(now) {
+    // Clamped at both ends. The ceiling stops a backgrounded tab resuming with one
+    // enormous step; the floor matters because a clock that goes backwards runs every
+    // effect timer in reverse, and an fx radius derived from it goes negative and
+    // makes ctx.arc throw. The screenshot harness pumps frames ahead of the wall
+    // clock, so it hits this on every capture.
+    const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
+    last = now;
+
+    update(dt);
+
+    // clear in real pixels, then work in game units for everything after
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+
+    if (phase === 'win') {
+      drawFinale();
+    } else {
+      updateCamera();
+      ctx.save();
+      ctx.translate(0, HUD_H);
+      ctx.beginPath();
+      ctx.rect(0, 0, VIEW_W, VIEW_H);
+      ctx.clip();
+      ctx.translate(-camX, -camY);
+      drawMap();
+      drawLandmark();
+      for (const hz of hazards) drawHazard(hz);
+      if (melUnlocked) drawMelTrail();
+      if (stage.hasMike && !mikeUnlocked && !stage.mikeFound) drawMikeNPC();
+      if (mikeUnlocked) drawCompanion();
+      if (melUnlocked) drawMelCompanion();
+      drawItemPickup(now);
+      for (const en of stage.enemies) drawEnemy(en);
+      for (const b of stage.bosses) drawBoss(b);
+      for (const wv of waves) drawWave(wv);
+      for (const bo of bolts) drawBolt(bo);
+      for (const la of lashes) drawLash(la);
+      if (healZone) drawHealZone(healZone);
+      for (const n of notes) drawNote(n);
+      for (const s of shots) drawShot(s);
+      for (const f of fx) drawFx(f);
+      drawPlayer();
+      drawExitMarker();
+      ctx.restore();
+
+      drawHUD();
+      if (phase === 'play' || phase === 'toast') drawObjectiveBanner();
+      if (phase === 'toast') drawToastBox();
+      if (phase === 'intro') drawIntroBox();
+      if (phase === 'gameover') drawGameOverBox();
+    }
+
+    ctx.drawImage(overlay, 0, 0);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- VHS wash overlays -->
+<div class="fx-soft" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+<div class="fx-grain" aria-hidden="true"></div>
+<div class="fx-scan" aria-hidden="true"></div>
+<div class="fx-track" aria-hidden="true"></div>
+<div class="fx-glitch" aria-hidden="true"></div>
+</body>
+</html>

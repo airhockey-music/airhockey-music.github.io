@@ -1,0 +1,14 @@
+# Local backups / version history — not part of the website
+memory/
+
+# Dev tooling, build scripts, and generated artifact builds
+.claude/
+
+# Generated upload bundle (rebuild with .claude/sync-all.py)
+airhockey-site.zip
+
+# macOS cruft
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes

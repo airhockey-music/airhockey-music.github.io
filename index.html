@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>airhockey — shoegaze / dream-pop / miami, fl</title>
+
+<!-- SEO -->
+<meta name="description" content="airhockey is a shoegaze, dream-pop and indie rock band from Miami, FL. Big yet not heavy — washy vocals, driving bass, infectious guitars, faded synths. Latest single 'felt' out now." />
+<meta name="keywords" content="airhockey, shoegaze, dream-pop, indie rock, miami, florida, band, felt, little friday, music" />
+<meta name="author" content="airhockey" />
+<meta name="theme-color" content="#dbdcff" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="music.band" />
+<meta property="og:title" content="airhockey — shoegaze / dream-pop / miami, fl" />
+<meta property="og:description" content="The melancholic gray area between trust and uncertainty. Latest single 'felt' out now on all platforms." />
+<meta property="og:site_name" content="airhockey" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:image" content="airhockey-logo.png" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="airhockey — shoegaze / dream-pop / miami, fl" />
+<meta name="twitter:description" content="Big yet not heavy. Washy vocals, driving bass, infectious guitars, faded synths. Latest single 'felt' out now." />
+<meta name="twitter:image" content="airhockey-logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* brand pastels sampled from the airhockey logo */
+    --lav:      #dbdcff;   /* periwinkle — brand base */
+    --lav-bg:   #e9e9ff;   /* airy page background */
+    --paper:    #f3f2ff;   /* lightest panel */
+    --mint:     #d4ffea;   /* wordmark mint */
+    --mint-2:   #9ff0cb;   /* deeper mint for accents/buttons */
+    --pink:     #eecbff;   /* offset lilac-pink */
+    --pink-2:   #d7a6f5;   /* deeper pink */
+    --yellow:   #feffa3;   /* offset pale yellow */
+    --sky:      #cfe4ff;   /* soft sky blue */
+
+    --ink:      #3a3360;   /* deep violet — headings */
+    --ink-body: #56507e;   /* body text */
+    --ink-soft: rgba(58, 51, 96, 0.60);
+    --ink-faint:rgba(58, 51, 96, 0.40);
+    --line:     rgba(58, 51, 96, 0.14);
+
+    --font-head: "Fredoka", "Trebuchet MS", sans-serif;
+    --font-body: "Fredoka", "Trebuchet MS", -apple-system, sans-serif;
+
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --maxw: 1200px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--lav-bg);
+    color: var(--ink-body);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--mint-2); color: var(--ink); }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+
+  :focus-visible {
+    outline: 2px solid var(--pink-2);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ---------- Grain / noise overlay ---------- */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    z-index: 2;
+  }
+
+  /* ---------- Global film-grain + VHS wash (shoegaze haze) ---------- */
+  .fx-grain, .fx-scan, .fx-vignette { position: fixed; pointer-events: none; }
+  .fx-vignette {
+    inset: 0; z-index: 9997;
+    background: radial-gradient(125% 105% at 50% 42%, transparent 58%, rgba(58, 51, 96, 0.16));
+  }
+  .fx-grain {
+    top: -60%; left: -60%; width: 220%; height: 220%; z-index: 9998;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.55'/%3E%3C/svg%3E");
+    opacity: 0.22; mix-blend-mode: soft-light;
+    animation: grainshift 0.34s steps(3) infinite;
+  }
+  @keyframes grainshift {
+    0%   { transform: translate(0, 0); }
+    20%  { transform: translate(-4%, 3%); }
+    40%  { transform: translate(3%, -3%); }
+    60%  { transform: translate(-3%, -2%); }
+    80%  { transform: translate(4%, 2%); }
+    100% { transform: translate(0, 0); }
+  }
+  .fx-scan {
+    inset: 0; z-index: 9999;
+    background: repeating-linear-gradient(to bottom,
+      rgba(58, 51, 96, 0.10) 0px, rgba(58, 51, 96, 0.10) 1px,
+      transparent 1px, transparent 3px);
+    opacity: 0.52; mix-blend-mode: multiply;
+  }
+  /* slight VHS focus softness + color bleed */
+  .fx-soft {
+    position: fixed; inset: 0; z-index: 9996; pointer-events: none;
+    /* eased back from 0.8px: the wash is still there, the type is legible through it */
+    -webkit-backdrop-filter: blur(0.35px) saturate(1.16) contrast(1.03);
+    backdrop-filter: blur(0.35px) saturate(1.16) contrast(1.03);
+  }
+  /* slow-rolling tracking band */
+  .fx-track {
+    position: fixed; left: -5%; right: -5%; height: 120px; z-index: 10001; pointer-events: none;
+    background: linear-gradient(to bottom,
+      transparent, rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.14) 50%,
+      rgba(0,255,224,0.05) 58%, rgba(255,255,255,0.05) 65%, transparent);
+    filter: blur(2px); mix-blend-mode: overlay; opacity: 0.7;
+    animation: track 7s linear infinite;
+  }
+  @keyframes track {
+    0%   { transform: translateY(-140px); }
+    100% { transform: translateY(104vh); }
+  }
+  /* sporadic VHS glitch — chroma tear + horizontal jump */
+  .fx-glitch {
+    position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: 0;
+    background: repeating-linear-gradient(0deg,
+      transparent 0 4px,
+      rgba(0, 255, 224, 0.30) 4px 6px,
+      transparent 6px 10px,
+      rgba(255, 44, 140, 0.30) 10px 12px);
+    mix-blend-mode: screen;
+    animation: vhsglitch 4.6s steps(1, end) infinite;
+  }
+  @keyframes vhsglitch {
+    0%, 9%  { opacity: 0;    transform: translate(0, 0); }
+    9.4%    { opacity: 1;    transform: translate(-14px, 2px) skewX(-1.1deg); }
+    9.9%    { opacity: 0.28; transform: translate(12px, -3px) skewX(1.3deg); }
+    10.4%   { opacity: 0.9;  transform: translate(-7px, 1px); }
+    10.9%   { opacity: 0;    transform: translate(0, 0); }
+    42%     { opacity: 0;    transform: translate(0, 0); }
+    42.4%   { opacity: 0.95; transform: translate(11px, -3px) skewX(1.1deg); }
+    42.9%   { opacity: 0.22; transform: translate(-13px, 2px); }
+    43.4%   { opacity: 0.85; transform: translate(6px, 0) skewX(-0.9deg); }
+    43.9%   { opacity: 0;    transform: translate(0, 0); }
+    75%     { opacity: 0;    transform: translate(0, 0); }
+    75.4%   { opacity: 1;    transform: translate(-15px, 3px) skewX(-1.3deg); }
+    75.9%   { opacity: 0.25; transform: translate(10px, -2px); }
+    76.4%   { opacity: 0.7;  transform: translate(-5px, 1px); }
+    76.9%   { opacity: 0;    transform: translate(0, 0); }
+    100%    { opacity: 0;    transform: translate(0, 0); }
+  }
+  /* camcorder HUD — REC dot + running timecode */
+  .fx-hud {
+    position: fixed; top: 84px; right: 20px; z-index: 10002; pointer-events: none;
+    display: flex; align-items: center; gap: 0.5em;
+    font-family: var(--font-head); font-weight: 600;
+    font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(58, 51, 96, 0.5);
+    text-shadow: 1.2px 0 0 rgba(255, 44, 140, 0.35), -1.2px 0 0 rgba(0, 200, 200, 0.35);
+  }
+  .fx-hud .rec {
+    width: 9px; height: 9px; border-radius: 50%; background: #ff3b6b;
+    box-shadow: 0 0 9px #ff3b6b; animation: recblink 1.1s steps(1) infinite;
+  }
+  @keyframes recblink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0.12; } }
+  @media (max-width: 600px) { .fx-hud { top: auto; bottom: 14px; right: 14px; font-size: 0.72rem; } }
+
+  /* film-photo / gradient placeholder base */
+  .film {
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    isolation: isolate;
+  }
+  .film::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+    opacity: 0.35;
+    z-index: 2;
+  }
+  /* soft overexposed bloom in a corner */
+  .film::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 90% at 78% 14%, rgba(255, 255, 255, 0.55), transparent 55%);
+    mix-blend-mode: screen;
+    opacity: 0.8;
+    z-index: 1;
+  }
+
+  /* ---------- Layout helpers ---------- */
+  .wrap {
+    width: 100%;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 clamp(1.4rem, 5vw, 3.5rem);
+  }
+  section { position: relative; }
+
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--pink-2);
+    margin-bottom: 1.4rem;
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    font-style: italic;
+    text-shadow: 3px 3px 0 var(--yellow), -3px 2px 0 var(--pink);
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    padding: 0.85em 1.7em;
+    border-radius: 40px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.4s var(--ease);
+    background: none;
+    color: var(--ink);
+  }
+  .btn-primary {
+    background: var(--mint-2);
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--pink-2);
+  }
+  .btn-primary:hover {
+    background: var(--pink);
+    box-shadow: 3px 3px 0 var(--mint-2);
+    transform: translateY(-2px);
+  }
+  .btn-ghost {
+    border-color: var(--ink-soft);
+    color: var(--ink);
+  }
+  .btn-ghost:hover {
+    border-color: var(--pink-2);
+    color: var(--pink-2);
+    background: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+  }
+
+  /* ===========================================================
+     NAVIGATION
+  ============================================================ */
+  header.nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    transition: transform 0.5s var(--ease), background 0.5s var(--ease), backdrop-filter 0.5s var(--ease);
+  }
+  header.nav.hidden { transform: translateY(-100%); }
+  header.nav.scrolled {
+    background: rgba(233, 233, 255, 0.72);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 clamp(1.4rem, 5vw, 3.5rem);
+  }
+  .logo img {
+    height: 26px;
+    width: auto;
+    transition: transform 0.35s var(--ease), filter 0.35s var(--ease);
+    filter: saturate(1.05) drop-shadow(0 1px 1px rgba(58, 51, 96, 0.28));
+  }
+  .logo:hover img { transform: rotate(-1.5deg) scale(1.04); }
+
+  .nav-links { display: flex; gap: 2.4rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    position: relative;
+    padding: 0.3em 0;
+    transition: color 0.3s var(--ease);
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 0; height: 2px;
+    background: var(--pink-2);
+    transition: width 0.35s var(--ease);
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-links a.nav-play {
+    color: var(--ink); background: var(--mint-2);
+    padding: 0.4em 1em; border-radius: 40px;
+    box-shadow: 2px 2px 0 var(--pink-2); letter-spacing: 0.06em;
+  }
+  .nav-links a.nav-play::after { display: none; }
+  .nav-links a.nav-play:hover { background: var(--yellow); transform: translateY(-1px); }
+
+  /* the right-hand group: nav links, the soundtrack toggle, and the burger. Grouping
+     them keeps the links hard right the way they were before the toggle existed. */
+  .nav-right { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.4rem); }
+
+  /* The soundtrack is opt-in. A band site that starts playing at you is a band site
+     people close, and this one already has Bandcamp and Spotify players of its own. */
+  .nav-audio {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 40px;
+    padding: 0.42em 0.95em;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 0.82rem; font-weight: 500; letter-spacing: 0.1em;
+    transition: color 0.3s var(--ease), border-color 0.3s var(--ease),
+                background 0.3s var(--ease);
+  }
+  .nav-audio:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .nav-audio[aria-pressed="true"] {
+    color: var(--ink); background: var(--mint); border-color: var(--mint-2);
+  }
+  .nav-audio-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+  .nav-audio-bars i {
+    width: 2px; height: 3px; border-radius: 1px;
+    background: currentColor;
+    transition: height 0.3s var(--ease);
+  }
+  .nav-audio[aria-pressed="true"] .nav-audio-bars i { animation: eq 0.9s ease-in-out infinite; }
+  .nav-audio[aria-pressed="true"] .nav-audio-bars i:nth-child(2) { animation-delay: 0.18s; }
+  .nav-audio[aria-pressed="true"] .nav-audio-bars i:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 12px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .nav-audio[aria-pressed="true"] .nav-audio-bars i { animation: none; height: 8px; }
+  }
+  @media (max-width: 420px) { .nav-audio-label { display: none; } .nav-audio { padding: 0.42em 0.7em; } }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none; border: none;
+    cursor: pointer; padding: 8px;
+    z-index: 110;
+  }
+  .hamburger span {
+    width: 24px; height: 2px; border-radius: 2px;
+    background: var(--ink);
+    transition: transform 0.4s var(--ease), opacity 0.3s var(--ease);
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .mobile-menu {
+    position: fixed; inset: 0;
+    background: rgba(233, 233, 255, 0.97);
+    backdrop-filter: blur(10px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2rem; z-index: 105;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.45s var(--ease), visibility 0.45s var(--ease);
+  }
+  .mobile-menu.open { opacity: 1; visibility: visible; }
+  .mobile-menu a {
+    font-family: var(--font-head);
+    font-size: 2.4rem; font-weight: 500;
+    color: var(--ink);
+    transition: color 0.3s var(--ease);
+  }
+  .mobile-menu a:hover { color: var(--pink-2); }
+
+  /* ===========================================================
+     HERO
+  ============================================================ */
+  .hero {
+    position: relative;
+    min-height: 100vh; min-height: 100svh;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; overflow: hidden;
+    background:
+      radial-gradient(120% 100% at 50% 18%, rgba(238, 203, 255, 0.55), transparent 55%),
+      radial-gradient(100% 90% at 82% 80%, rgba(212, 255, 234, 0.6), transparent 55%),
+      linear-gradient(160deg, #e6fff5 0%, #dbdcff 48%, #f0daff 100%);
+  }
+  .hero-glow {
+    position: absolute;
+    width: 66vmax; height: 66vmax;
+    left: 50%; top: 32%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 255, 163, 0.5), rgba(238,203,255,0.25) 45%, transparent 66%);
+    filter: blur(24px);
+    animation: drift 22s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+  @keyframes drift {
+    0%   { transform: translate(-58%, -54%) scale(1); opacity: 0.75; }
+    50%  { transform: translate(-44%, -46%) scale(1.18); opacity: 1; }
+    100% { transform: translate(-52%, -58%) scale(1.05); opacity: 0.7; }
+  }
+
+  .particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  /* glowing shooting stars */
+  .star {
+    position: absolute;
+    width: var(--len, 120px); height: 2px;
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: shoot var(--dur, 6s) ease-in var(--delay, 0s) infinite;
+  }
+  .star::before {           /* fading trail */
+    content: ""; position: absolute; inset: 0; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--c, #fff));
+  }
+  .star::after {            /* glowing head */
+    content: ""; position: absolute; right: -1px; top: 50%;
+    width: 3px; height: 3px; margin-top: -1.5px; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 7px 1px var(--c, #fff), 0 0 16px 4px var(--c, #fff);
+  }
+  @keyframes shoot {
+    0%   { opacity: 0; transform: rotate(var(--ang, 24deg)) translateX(-40px) scaleX(0.4); }
+    8%   { opacity: 1; }
+    65%  { opacity: 1; }
+    100% { opacity: 0; transform: rotate(var(--ang, 24deg)) translateX(var(--travel, 460px)) scaleX(1); }
+  }
+
+  .hero-content { position: relative; z-index: 3; padding: 0 1.4rem; width: 100%; }
+  .hero-logo {
+    width: min(680px, 86vw);
+    height: auto;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 0 rgba(58, 51, 96, 0.20)) drop-shadow(0 14px 28px rgba(120, 100, 170, 0.38));
+    animation: floaty 7s ease-in-out infinite;
+  }
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0) rotate(-0.4deg); }
+    50%      { transform: translateY(-10px) rotate(0.4deg); }
+  }
+  .hero .tagline {
+    margin-top: 1.8rem;
+    font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+    color: var(--ink-soft);
+  }
+  .hero-ctas {
+    margin-top: 2.6rem;
+    display: flex; gap: 1rem;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .scroll-hint {
+    position: absolute; bottom: 2.2rem; left: 50%;
+    transform: translateX(-50%); z-index: 3;
+    font-size: 0.66rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--ink-faint);
+    display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+  }
+  .scroll-hint .line {
+    width: 2px; height: 38px; border-radius: 2px;
+    background: linear-gradient(var(--pink-2), transparent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.7); }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* ===========================================================
+     REVEAL
+  ============================================================ */
+  .reveal {
+    opacity: 0; transform: translateY(34px);
+    transition: opacity 1s var(--ease), transform 1s var(--ease);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal[data-delay="1"] { transition-delay: 0.12s; }
+  .reveal[data-delay="2"] { transition-delay: 0.24s; }
+  .reveal[data-delay="3"] { transition-delay: 0.36s; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .hero-glow, .star, .scroll-hint .line, .hero-logo, .fx-grain, .fx-glitch, .fx-track, .fx-hud .rec { animation: none; }
+    .fx-glitch, .fx-track { display: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ===========================================================
+     SECTIONS
+  ============================================================ */
+  .section-pad { padding: clamp(5rem, 12vw, 9rem) 0; }
+
+  .latest {
+    background:
+      radial-gradient(120% 80% at 85% 0%, rgba(212, 255, 234, 0.5), transparent 60%),
+      var(--lav-bg);
+    border-top: 1px solid var(--line);
+  }
+  .latest-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(2rem, 5vw, 4.5rem); align-items: center;
+  }
+  .latest-art {
+    aspect-ratio: 1 / 1; position: relative;
+    background: linear-gradient(150deg, #d4ffea 0%, #cfe4ff 40%, #eecbff 75%, #feffa3 100%);
+    box-shadow: 8px 12px 0 var(--pink), 0 0 0 1px var(--line);
+  }
+  .latest-art .cover,
+  .release-art .cover,
+  .about-photo .cover {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; z-index: 0;
+  }
+  .latest-info h2 {
+    font-family: var(--font-head); font-weight: 600; font-style: italic;
+    font-size: clamp(2.6rem, 6vw, 4.4rem); line-height: 1;
+    margin: 0.4rem 0 0.2rem; color: var(--ink);
+    text-shadow: 3px 3px 0 var(--yellow), -2px 2px 0 var(--pink);
+  }
+  .latest-info .meta {
+    font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 1.4rem;
+  }
+  .latest-info p.desc {
+    color: var(--ink-body); max-width: 42ch; margin-bottom: 2rem; font-size: 1.02rem;
+  }
+  .stream-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+  .stream-btn {
+    display: inline-flex; align-items: center; gap: 0.55em;
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em;
+    padding: 0.7em 1.2em; border: 1px solid var(--line);
+    border-radius: 40px; color: var(--ink-body);
+    background: rgba(255,255,255,0.5);
+    transition: all 0.35s var(--ease);
+  }
+  .stream-btn i { font-size: 1rem; }
+  .stream-btn:hover {
+    border-color: transparent; color: var(--ink);
+    background: var(--mint); transform: translateY(-2px);
+    box-shadow: 2px 2px 0 var(--pink-2);
+  }
+
+  /* ---------- Discography ---------- */
+  .disco-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: clamp(1rem, 2.5vw, 1.8rem); margin-top: 3.5rem;
+  }
+  .release { cursor: pointer; }
+  .release-art {
+    aspect-ratio: 1 / 1; position: relative;
+    box-shadow: 0 14px 30px -18px rgba(90, 70, 140, 0.5), 0 0 0 1px var(--line);
+    transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+  }
+  .release:hover .release-art {
+    transform: translateY(-6px) rotate(-1deg);
+    box-shadow: 8px 14px 0 var(--pink), 0 0 0 1px var(--line);
+  }
+  .release-overlay {
+    position: absolute; inset: 0; z-index: 4;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(219, 220, 255, 0.42);
+    opacity: 0; transition: opacity 0.4s var(--ease);
+  }
+  .release:hover .release-overlay,
+  .release:focus-within .release-overlay { opacity: 1; }
+  .release-overlay .listen {
+    font-size: 0.74rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink); border: none; padding: 0.7em 1.4em; border-radius: 40px;
+    background: var(--mint-2); box-shadow: 2px 2px 0 var(--pink-2);
+    transition: all 0.3s var(--ease);
+  }
+  .release-overlay .listen:hover { background: var(--yellow); }
+  .release-art .art-title {
+    position: absolute; bottom: 0.9rem; left: 1rem; right: 1rem; z-index: 3;
+    font-family: var(--font-head); font-style: italic;
+    font-size: 1.25rem; line-height: 1.1; color: rgba(58, 51, 96, 0.5);
+  }
+
+  .release-info { margin-top: 0.9rem; }
+  .release-info .title {
+    font-family: var(--font-head); font-size: 1.3rem; font-weight: 600;
+    line-height: 1.1; color: var(--ink);
+  }
+  .release-info .sub {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-faint); margin-top: 0.2rem;
+  }
+
+  /* pastel cover variants */
+  .c-mint    { background: linear-gradient(145deg, #d4ffea, #9ff0cb 55%, #cfe4ff); }
+  .c-pink    { background: linear-gradient(145deg, #f6d9ff, #eecbff 50%, #d7a6f5); }
+  .c-yellow  { background: linear-gradient(150deg, #feffa3, #f2e9a6 50%, #d4ffea); }
+  .c-lav     { background: linear-gradient(150deg, #e7e7ff, #dbdcff 48%, #c6c7ff); }
+  .c-sky     { background: linear-gradient(150deg, #d9f0ff, #cfe4ff 48%, #dbdcff); }
+  .c-mintpink{ background: linear-gradient(145deg, #d4ffea, #dbdcff 50%, #eecbff); }
+  .c-peach   { background: linear-gradient(150deg, #ffe4d6, #feffa3 55%, #eecbff); }
+  .c-dream   { background: linear-gradient(150deg, #eecbff, #cfe4ff 50%, #d4ffea); }
+
+  /* ---------- About ---------- */
+  .about {
+    background:
+      radial-gradient(110% 90% at 0% 50%, rgba(238, 203, 255, 0.4), transparent 55%),
+      var(--lav-bg);
+    border-top: 1px solid var(--line);
+  }
+  .about-grid {
+    display: grid; grid-template-columns: 0.85fr 1fr;
+    gap: clamp(2rem, 6vw, 5rem); align-items: center;
+  }
+  .about-photo {
+    aspect-ratio: 4 / 5;
+    position: relative; overflow: hidden;
+    background: linear-gradient(155deg, #d4ffea 0%, #cfe4ff 35%, #eecbff 70%, #feffa3 100%);
+    box-shadow: 10px 14px 0 var(--mint-2), 0 0 0 1px var(--line);
+  }
+  .about-photo .caption {
+    position: absolute; bottom: 1.2rem; left: 1.4rem; z-index: 3;
+    font-family: var(--font-head); font-style: italic;
+    font-size: 1.1rem; color: rgba(58, 51, 96, 0.55);
+  }
+  .about-bio p { color: var(--ink-body); margin-bottom: 1.3rem; font-size: 1.04rem; }
+  .about-bio p:last-of-type {
+    font-family: var(--font-head); font-style: italic;
+    font-size: 1.4rem; color: var(--ink); line-height: 1.3; margin-top: 2rem;
+  }
+
+  .press-quote {
+    margin: 4.5rem auto 0; max-width: 760px; text-align: center;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 3rem 1rem;
+  }
+  .press-quote blockquote {
+    font-family: var(--font-head); font-style: italic; font-weight: 500;
+    font-size: clamp(1.3rem, 3.4vw, 2rem); line-height: 1.35; color: var(--ink);
+  }
+  .press-quote cite {
+    display: block; margin-top: 1.4rem; font-family: var(--font-body);
+    font-style: normal; font-size: 0.76rem; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--pink-2);
+  }
+
+  .members {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1rem, 3vw, 2rem); margin-top: 4.5rem;
+    max-width: 760px; margin-left: auto; margin-right: auto;
+  }
+  .member { text-align: center; }
+  .member-photo {
+    width: clamp(90px, 14vw, 150px); height: clamp(90px, 14vw, 150px);
+    border-radius: 50%; margin: 0 auto 1.1rem;
+    overflow: hidden; position: relative;
+    box-shadow: 0 12px 26px -14px rgba(90,70,140,0.55), 0 0 0 1px var(--line);
+    transition: transform 0.45s var(--ease);
+  }
+  .member-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .member:hover .member-photo { transform: translateY(-5px) scale(1.04); }
+  .member .name { font-family: var(--font-head); font-size: 1.3rem; font-weight: 600; color: var(--ink); }
+  .member .role {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-faint); margin-top: 0.2rem;
+  }
+
+  /* ---------- Shows ---------- */
+  .shows {
+    background:
+      radial-gradient(100% 100% at 50% 0%, rgba(212, 255, 234, 0.45), transparent 55%),
+      var(--lav-bg);
+    border-top: 1px solid var(--line); text-align: center;
+  }
+  .shows-live { max-width: 860px; margin: 3rem auto 0; }
+  .shows-live img {
+    width: 100%; display: block; border-radius: 12px;
+    box-shadow: 12px 16px 0 var(--pink), 0 0 0 1px var(--line);
+  }
+  .shows-live figcaption {
+    font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-faint); margin-top: 1rem;
+  }
+  .shows-empty {
+    font-family: var(--font-head); font-style: italic;
+    font-size: clamp(1.4rem, 4vw, 2.2rem); color: var(--ink-soft);
+    max-width: 24ch; margin: 2.5rem auto 0; line-height: 1.3;
+  }
+  .signup { margin: 3.5rem auto 0; max-width: 520px; }
+  .signup label {
+    display: block; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--pink-2); margin-bottom: 1.1rem;
+  }
+  .signup-form { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .signup-form input[type="email"] {
+    flex: 1; min-width: 200px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--line); border-radius: 40px;
+    color: var(--ink); font-family: var(--font-body); font-size: 0.92rem;
+    padding: 0.9em 1.3em; transition: border-color 0.3s var(--ease);
+  }
+  .signup-form input::placeholder { color: var(--ink-faint); }
+  .signup-form input:focus { outline: none; border-color: var(--pink-2); }
+  .signup-note { margin-top: 1.2rem; font-size: 0.8rem; color: var(--pink-2); min-height: 1.2em; }
+
+  /* ---------- Store ---------- */
+  .store {
+    background:
+      radial-gradient(100% 90% at 100% 100%, rgba(238, 203, 255, 0.4), transparent 55%),
+      var(--lav-bg);
+    border-top: 1px solid var(--line);
+  }
+  .store-head { text-align: center; margin-bottom: 3.5rem; }
+  .store-head p { color: var(--ink-body); margin-top: 1rem; font-size: 1.05rem; }
+  .products {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: clamp(1rem, 3vw, 2rem); margin-bottom: 3rem;
+  }
+  .product { text-align: center; display: block; }
+  .product:hover .pname { color: var(--pink-2); }
+  .product-art {
+    aspect-ratio: 1 / 1; margin-bottom: 1.1rem;
+    box-shadow: 0 14px 30px -18px rgba(90,70,140,0.5), 0 0 0 1px var(--line);
+    transition: transform 0.45s var(--ease);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .product:hover .product-art { transform: translateY(-6px) rotate(1.5deg); }
+  .product-art i { position: relative; z-index: 3; font-size: 2.4rem; color: rgba(58, 51, 96, 0.5); }
+  /* the store's own product shots, cut out on transparency -- so the pastel tile
+     behind them still shows through and the grid reads as part of the site */
+  .product-art .shot {
+    position: relative; z-index: 3;
+    width: 88%; height: 88%; object-fit: contain;
+  }
+  .product .pname { font-family: var(--font-head); font-size: 1.25rem; font-weight: 600; color: var(--ink); }
+  .product .pprice { font-size: 0.78rem; letter-spacing: 0.1em; color: var(--ink-faint); margin-top: 0.2rem; }
+  .store-cta { text-align: center; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    position: relative;
+    background: linear-gradient(0deg, #dbdcff, var(--lav-bg));
+    border-top: 1px solid var(--line);
+    padding: clamp(4rem, 9vw, 6rem) 0 2.5rem;
+    overflow: hidden;
+  }
+  .skyline {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    width: 100%; height: auto; opacity: 0.14; z-index: 0; pointer-events: none;
+  }
+  .footer-inner { position: relative; z-index: 2; text-align: center; }
+  .footer-logo img {
+    width: min(340px, 70vw); height: auto; margin: 0 auto;
+    filter: drop-shadow(0 6px 16px rgba(215,166,245,0.4));
+    transition: transform 0.4s var(--ease);
+  }
+  .footer-logo:hover img { transform: rotate(-1.5deg) scale(1.03); }
+  .footer-tag {
+    font-size: 0.74rem; font-weight: 500; letter-spacing: 0.28em;
+    text-transform: lowercase; color: var(--ink-faint); margin-top: 1rem;
+  }
+  .socials { display: flex; justify-content: center; gap: 1.1rem; margin: 2.6rem 0; }
+  .socials a {
+    width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 50%;
+    color: var(--ink-body); font-size: 1.05rem;
+    background: rgba(255,255,255,0.45);
+    transition: all 0.4s var(--ease);
+  }
+  .socials a:hover {
+    color: var(--ink); background: var(--mint-2); border-color: transparent;
+    transform: translateY(-4px) rotate(-6deg); box-shadow: 2px 3px 0 var(--pink-2);
+  }
+  .footer-meta { font-size: 0.74rem; color: var(--ink-faint); letter-spacing: 0.06em; line-height: 2; }
+  .footer-meta .loc { color: var(--pink-2); font-weight: 600; letter-spacing: 0.2em; text-transform: lowercase; }
+
+  /* ===========================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 900px) {
+    .disco-grid { grid-template-columns: repeat(2, 1fr); }
+    .members { grid-template-columns: repeat(2, 1fr); gap: 2.4rem 1.5rem; }
+    .latest-grid { grid-template-columns: 1fr; }
+    .latest-art { max-width: 420px; }
+    .about-grid { grid-template-columns: 1fr; }
+    .about-photo { max-width: 420px; }
+    .products { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 680px) {
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 460px) {
+    .disco-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .release-info .title { font-size: 1.1rem; }
+    .hero-ctas { flex-direction: column; align-items: stretch; }
+    .hero-ctas .btn { justify-content: center; }
+  }
+  .icon { width: 1em; height: 1em; display: inline-block;
+          vertical-align: -0.125em; flex: none; }
+</style>
+
+
+
+<!-- =================== NAVIGATION =================== -->
+</head>
+<body>
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#top" class="logo" aria-label="airhockey — home">
+      <img src="airhockey-logo-t.png" alt="airhockey" />
+    </a>
+    <div class="nav-right">
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#music">music</a></li>
+          <li><a href="#shows">shows</a></li>
+          <li><a href="#about">about</a></li>
+          <li><a href="#store">store</a></li>
+          <li><a href="game.html" class="nav-play">play ▸</a></li>
+        </ul>
+      </nav>
+      <button type="button" class="nav-audio" id="navAudio" aria-pressed="false"
+              aria-label="Play the 8-bit soundtrack">
+        <span class="nav-audio-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="nav-audio-label">music</span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="#music">music</a>
+  <a href="#shows">shows</a>
+  <a href="#about">about</a>
+  <a href="#store">store</a>
+  <a href="game.html">play ▸</a>
+</nav>
+
+<!-- =================== HERO =================== -->
+<main id="top">
+<section class="hero grain" aria-label="airhockey">
+  <div class="hero-glow"></div>
+  <div class="particles" id="particles" aria-hidden="true"></div>
+  <div class="hero-content">
+    <img class="hero-logo" src="airhockey-logo-t.png" alt="airhockey" />
+    <p class="tagline">shoegaze / dream-pop / miami, fl</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="https://airhockeyband.bandcamp.com" target="_blank" rel="noopener">
+        <svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true" aria-hidden="true"><path d="M8.4 5.4v13.2L19 12z"/></svg> listen now
+      </a>
+      <a class="btn btn-ghost" href="https://open.spotify.com/artist/2Ao0K5T0imPt2iA664SBzh" target="_blank" rel="noopener">
+        <svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true" aria-hidden="true"><circle cx="12" cy="12" r="9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 9.4c3.4-.9 7.2-.5 9.6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.8 12.7c2.8-.7 6-.4 8 .9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 15.9c2.2-.5 4.7-.3 6.3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> follow on spotify
+      </a>
+    </div>
+  </div>
+  <a href="#music" class="scroll-hint" aria-label="Scroll to music">
+    <span>scroll</span>
+    <span class="line"></span>
+  </a>
+</section>
+
+<!-- =================== LATEST RELEASE =================== -->
+<section class="latest section-pad" id="music">
+  <div class="wrap">
+    <div class="latest-grid">
+      <a class="latest-art reveal" href="https://airhockeyband.bandcamp.com/track/nice-day" target="_blank" rel="noopener" aria-label="Listen to nice day on Bandcamp">
+        <img class="cover" src="art/nice-day.jpg" alt="nice day cover art" />
+      </a>
+      <div class="latest-info reveal" data-delay="1">
+        <p class="eyebrow">latest release</p>
+        <h2>nice day</h2>
+        <p class="meta">single · september 2026</p>
+        <p class="desc">our newest single — out now on bandcamp. produced by airhockey, artwork by mel, mixed and mastered by sebastian.</p>
+        <div class="stream-row">
+          <a class="stream-btn" href="https://open.spotify.com/artist/2Ao0K5T0imPt2iA664SBzh" target="_blank" rel="noopener"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><circle cx="12" cy="12" r="9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 9.4c3.4-.9 7.2-.5 9.6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.8 12.7c2.8-.7 6-.4 8 .9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 15.9c2.2-.5 4.7-.3 6.3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> spotify</a>
+          <a class="stream-btn" href="https://music.apple.com/us/artist/airhockey/1448049999" target="_blank" rel="noopener"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3.1-1.6-1.3-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.4 0-2.8.9-3.6 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1.1 1.6 2.2 2.7 2.21 0 1.4-.7 2.7-.7 1.3 0 1.6.7 2.8.7 1.1 0 1.8-1 2.6-2.1.6-.9.8-1.3 1.2-2.2-3.1-1.2-3.1-4.6-3.1-4.9z"/><path d="M14.4 6.2c.6-.7.9-1.7.8-2.7-.8.1-1.9.6-2.5 1.3-.5.7-1 1.7-.9 2.6 1 .1 1.9-.5 2.6-1.2z"/></svg> apple music</a>
+          <a class="stream-btn" href="https://airhockeyband.bandcamp.com/track/nice-day" target="_blank" rel="noopener"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M2.2 17.6 8.7 6.4H21.8l-6.5 11.2z"/></svg> bandcamp</a>
+          <a class="stream-btn" href="https://soundcloud.com/airhockeymusic" target="_blank" rel="noopener"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M2.6 14.4v3.1M5.2 12.6v4.9M7.8 10.9v6.6M10.4 12v5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 17.5V9.2c.9-1.9 2.9-3.1 5-2.8 2.6.3 4.5 2.5 4.4 5.1 0 3-2.3 6-5.2 6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> soundcloud</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== DISCOGRAPHY =================== -->
+<section class="discography section-pad">
+  <div class="wrap">
+    <p class="eyebrow reveal">discography</p>
+    <h2 class="section-title reveal" data-delay="1">everything we've made.</h2>
+    <div class="disco-grid">
+
+      <a class="release reveal" href="https://airhockeyband.bandcamp.com/track/nice-day" target="_blank" rel="noopener" aria-label="nice day, single, September 2026">
+        <div class="release-art">
+          <img class="cover" src="art/nice-day.jpg" alt="nice day cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">nice day</div><div class="sub">single · sep 2026</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="1" href="https://airhockeyband.bandcamp.com/track/felt" target="_blank" rel="noopener" aria-label="felt, single, August 2026">
+        <div class="release-art">
+          <img class="cover" src="art/felt.jpg" alt="felt cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">felt</div><div class="sub">single · aug 2026</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="2" href="https://airhockeyband.bandcamp.com/track/ok-i-got-you" target="_blank" rel="noopener" aria-label="OK (I Got You), single, July 2026">
+        <div class="release-art">
+          <img class="cover" src="art/ok-i-got-you.jpg" alt="OK (I Got You) cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">OK (I Got You)</div><div class="sub">single · jul 2026</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="3" href="https://airhockeyband.bandcamp.com/track/hazel" target="_blank" rel="noopener" aria-label="Hazel, single, November 2025">
+        <div class="release-art">
+          <img class="cover" src="art/hazel.jpg" alt="Hazel cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Hazel</div><div class="sub">single · nov 2025</div></div>
+      </a>
+
+      <a class="release reveal" href="https://airhockeyband.bandcamp.com/track/little-friday" target="_blank" rel="noopener" aria-label="Little Friday, single, January 2025">
+        <div class="release-art">
+          <img class="cover" src="art/little-friday.jpg" alt="Little Friday cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Little Friday</div><div class="sub">single · jan 2025</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="1" href="https://airhockeyband.bandcamp.com/track/oscuridad" target="_blank" rel="noopener" aria-label="Oscuridad, single, April 2024">
+        <div class="release-art">
+          <img class="cover" src="art/oscuridad.jpg" alt="Oscuridad cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Oscuridad</div><div class="sub">single · apr 2024</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="2" href="https://airhockeyband.bandcamp.com/track/something" target="_blank" rel="noopener" aria-label="Something, single, February 2024">
+        <div class="release-art">
+          <img class="cover" src="art/something.jpg" alt="Something cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Something</div><div class="sub">single · feb 2024</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="3" href="https://airhockeyband.bandcamp.com/track/always-late" target="_blank" rel="noopener" aria-label="Always Late, single, April 2023">
+        <div class="release-art">
+          <img class="cover" src="art/always-late.jpg" alt="Always Late cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Always Late</div><div class="sub">single · apr 2023</div></div>
+      </a>
+
+      <a class="release reveal" href="https://airhockeyband.bandcamp.com/track/close" target="_blank" rel="noopener" aria-label="Close, single, January 2023">
+        <div class="release-art">
+          <img class="cover" src="art/close.jpg" alt="Close cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Close</div><div class="sub">single · jan 2023</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="1" href="https://airhockeyband.bandcamp.com/track/grapefruit" target="_blank" rel="noopener" aria-label="Grapefruit, single, April 2022">
+        <div class="release-art">
+          <img class="cover" src="art/grapefruit.jpg" alt="Grapefruit cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Grapefruit</div><div class="sub">single · apr 2022</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="2" href="https://airhockeyband.bandcamp.com/album/walkthrough" target="_blank" rel="noopener" aria-label="Walkthrough, EP, July 2020">
+        <div class="release-art">
+          <img class="cover" src="art/walkthrough.jpg" alt="Walkthrough cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Walkthrough</div><div class="sub">ep · jul 2020</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="3" href="https://airhockeyband.bandcamp.com/track/not-enough" target="_blank" rel="noopener" aria-label="Not Enough, single, June 2020">
+        <div class="release-art">
+          <img class="cover" src="art/not-enough.jpg" alt="Not Enough cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Not Enough</div><div class="sub">single · jun 2020</div></div>
+      </a>
+
+      <a class="release reveal" href="https://airhockeyband.bandcamp.com/track/try" target="_blank" rel="noopener" aria-label="Try, single, June 2020">
+        <div class="release-art">
+          <img class="cover" src="art/try.jpg" alt="Try cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Try</div><div class="sub">single · jun 2020</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="1" href="https://airhockeyband.bandcamp.com/track/just-not-fair" target="_blank" rel="noopener" aria-label="Just Not Fair, single, April 2020">
+        <div class="release-art">
+          <img class="cover" src="art/just-not-fair.jpg" alt="Just Not Fair cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">Just Not Fair</div><div class="sub">single · apr 2020</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="2" href="https://airhockeyband.bandcamp.com/track/the-signs" target="_blank" rel="noopener" aria-label="The Signs, single, October 2019">
+        <div class="release-art">
+          <img class="cover" src="art/the-signs.jpg" alt="The Signs cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">The Signs</div><div class="sub">single · oct 2019</div></div>
+      </a>
+
+      <a class="release reveal" data-delay="3" href="https://airhockeyband.bandcamp.com/track/hidden-by-the-sun" target="_blank" rel="noopener" aria-label="hidden by the sun, single, June 2019">
+        <div class="release-art">
+          <img class="cover" src="art/hidden-by-the-sun.jpg" alt="hidden by the sun cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">hidden by the sun</div><div class="sub">single · jun 2019</div></div>
+      </a>
+
+      <a class="release reveal" href="https://airhockeyband.bandcamp.com/track/you-dont-mind" target="_blank" rel="noopener" aria-label="you don't mind, single, January 2019">
+        <div class="release-art">
+          <img class="cover" src="art/you-dont-mind.jpg" alt="you don't mind cover art" loading="lazy" />
+          <div class="release-overlay"><span class="listen">listen</span></div>
+        </div>
+        <div class="release-info"><div class="title">you don't mind</div><div class="sub">single · jan 2019</div></div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- =================== ABOUT =================== -->
+<section class="about section-pad" id="about">
+  <div class="wrap">
+    <div class="about-grid">
+      <div class="about-photo reveal" aria-label="airhockey in Miami">
+        <img class="cover" src="photos/band-couch.jpg" alt="airhockey — Sebastian Hidalgo, Mel Sarria and Mike Diaz in Miami" loading="lazy" />
+        <span class="caption">airhockey, miami</span>
+      </div>
+      <div class="about-bio reveal" data-delay="1">
+        <p class="eyebrow">about</p>
+        <p>airhockey began in the summer of 2018 when Mel and Sebastian started writing songs in their bedroom in the Miami suburbs. What started as a two-person experiment became something bigger when Mike joined — whose parallel solo project felt like it was already coming from the same place.</p>
+        <p>The result is a sound that's big without being heavy: washy vocals layered over driving bass, infectious guitars, and faded synths. Lyrically, airhockey lives in the emotional gray area — not falling in love, not falling out, but the uncertain middle. Trust. Uncertainty. What comes after.</p>
+        <p>Made in Miami. Felt everywhere.</p>
+      </div>
+    </div>
+
+    <figure class="press-quote reveal">
+      <blockquote>"The anchoring ethereal synth line emulates the pop-rock of The Cure, but when paired with woozy and muted vocals, it creates a sound that's markedly distinctive."</blockquote>
+      <cite>— High Clouds, June 2019</cite>
+    </figure>
+
+    <div class="members">
+      <div class="member reveal">
+        <div class="member-photo"><img src="members/sebastian.jpg" alt="Sebastian Hidalgo" loading="lazy" /></div>
+        <div class="name">Sebastian Hidalgo</div>
+        <div class="role">vocals / guitar</div>
+      </div>
+      <div class="member reveal" data-delay="1">
+        <div class="member-photo"><img src="members/melanie.jpg" alt="Mel Sarria" loading="lazy" /></div>
+        <div class="name">Mel Sarria</div>
+        <div class="role">bass</div>
+      </div>
+      <div class="member reveal" data-delay="2">
+        <div class="member-photo"><img src="members/mike.jpg" alt="Mike Diaz" loading="lazy" /></div>
+        <div class="name">Mike Diaz</div>
+        <div class="role">guitar / synth</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SHOWS =================== -->
+<section class="shows section-pad" id="shows">
+  <div class="wrap">
+    <p class="eyebrow reveal" style="text-align:center;">live</p>
+    <h2 class="section-title reveal" data-delay="1">shows</h2>
+
+    <figure class="shows-live reveal" data-delay="1">
+      <img src="photos/live-band.jpg" alt="airhockey performing live in Miami — Sebastian and Mike on stage" loading="lazy" />
+      <figcaption>airhockey, live in miami</figcaption>
+    </figure>
+
+    <p class="shows-empty reveal" data-delay="1">no upcoming shows announced — follow us for updates.</p>
+
+    <form class="signup reveal" data-delay="2" id="signupForm">
+      <label for="email">get early access to show announcements</label>
+      <div class="signup-form">
+        <input type="email" id="email" name="email" placeholder="your email" required aria-label="Email address" />
+        <button type="submit" class="btn btn-primary">notify me</button>
+      </div>
+      <p class="signup-note" id="signupNote" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<!-- =================== STORE =================== -->
+<section class="store section-pad" id="store">
+  <div class="wrap">
+    <div class="store-head">
+      <p class="eyebrow reveal">store</p>
+      <h2 class="section-title reveal" data-delay="1">merch, cassettes, and more</h2>
+      <p class="reveal" data-delay="1">limited runs, hand-numbered. when they're gone, they're gone.</p>
+    </div>
+
+    <div class="products">
+      <a class="product reveal" href="https://airhockey.bigcartel.com/product/the-fanny-pack" target="_blank" rel="noopener">
+        <div class="product-art film c-mint"><img class="shot" src="merch/the-fanny-pack.png" alt="the fanny pack" loading="lazy" /></div>
+        <div class="pname">the fanny pack</div>
+        <div class="pprice">$30</div>
+      </a>
+      <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/box-logo-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-pink"><img class="shot" src="merch/box-logo-tee.png" alt="box logo tee" loading="lazy" /></div>
+        <div class="pname">box logo tee</div>
+        <div class="pprice">$20</div>
+      </a>
+      <a class="product reveal" data-delay="2" href="https://airhockey.bigcartel.com/product/walkthrough-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-yellow"><img class="shot" src="merch/walkthrough-tee.png" alt="walkthrough tee" loading="lazy" /></div>
+        <div class="pname">walkthrough tee</div>
+        <div class="pprice">$25</div>
+      </a>
+      <a class="product reveal" href="https://airhockey.bigcartel.com/product/simple-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-sky"><img class="shot" src="merch/simple-tee.png" alt="simple tee" loading="lazy" /></div>
+        <div class="pname">simple tee</div>
+        <div class="pprice">$20</div>
+      </a>
+      <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-lav"><img class="shot" src="merch/spaced-tee.png" alt="spaced tee" loading="lazy" /></div>
+        <div class="pname">spaced tee</div>
+        <div class="pprice">$25</div>
+      </a>
+    </div>
+
+    <div class="store-cta reveal">
+      <a class="btn btn-primary" href="https://airhockey.bigcartel.com/" target="_blank" rel="noopener">
+        <svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true" aria-hidden="true"><path d="M4.8 7.8h14.4l-1 12.4H5.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.9 7.8V5.9a3.1 3.1 0 0 1 6.2 0v1.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> visit the store
+      </a>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- =================== FOOTER =================== -->
+<footer>
+  <svg class="skyline" viewBox="0 0 1440 200" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+    <g fill="#c6c7ff">
+      <rect x="60"  y="120" width="34" height="80"/>
+      <rect x="104" y="90"  width="40" height="110"/>
+      <rect x="154" y="140" width="30" height="60"/>
+      <rect x="196" y="70"  width="46" height="130"/>
+      <rect x="252" y="110" width="34" height="90"/>
+      <rect x="296" y="150" width="26" height="50"/>
+      <rect x="980"  y="100" width="40" height="100"/>
+      <rect x="1030" y="130" width="30" height="70"/>
+      <rect x="1070" y="80"  width="46" height="120"/>
+      <rect x="1126" y="120" width="34" height="80"/>
+      <rect x="1170" y="150" width="26" height="50"/>
+      <rect x="1206" y="96"  width="42" height="104"/>
+      <rect x="1258" y="140" width="30" height="60"/>
+      <g transform="translate(700,200)">
+        <rect x="-3" y="-70" width="6" height="70"/>
+        <path d="M0,-70 C-30,-86 -56,-80 -70,-64 C-50,-72 -26,-72 0,-70 Z"/>
+        <path d="M0,-70 C30,-86 56,-80 70,-64 C50,-72 26,-72 0,-70 Z"/>
+        <path d="M0,-70 C-18,-96 -10,-118 4,-128 C-2,-108 -4,-90 0,-70 Z"/>
+        <path d="M0,-70 C18,-96 10,-118 -4,-128 C2,-108 4,-90 0,-70 Z"/>
+      </g>
+      <g transform="translate(760,200) scale(0.78)">
+        <rect x="-3" y="-70" width="6" height="70"/>
+        <path d="M0,-70 C-30,-86 -56,-80 -70,-64 C-50,-72 -26,-72 0,-70 Z"/>
+        <path d="M0,-70 C30,-86 56,-80 70,-64 C50,-72 26,-72 0,-70 Z"/>
+        <path d="M0,-70 C-18,-96 -10,-118 4,-128 C-2,-108 -4,-90 0,-70 Z"/>
+        <path d="M0,-70 C18,-96 10,-118 -4,-128 C2,-108 4,-90 0,-70 Z"/>
+      </g>
+    </g>
+  </svg>
+
+  <div class="footer-inner wrap">
+    <a href="#top" class="footer-logo" aria-label="airhockey — home">
+      <img src="airhockey-logo-t.png" alt="airhockey" />
+    </a>
+    <p class="footer-tag">shoegaze / dream-pop</p>
+
+    <div class="socials">
+      <a href="https://www.instagram.com/airhockeyband" target="_blank" rel="noopener" aria-label="Instagram"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><rect x="2.8" y="2.8" width="18.4" height="18.4" rx="5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.4" cy="6.6" r="1.3"/></svg></a>
+      <a href="https://open.spotify.com/artist/2Ao0K5T0imPt2iA664SBzh" target="_blank" rel="noopener" aria-label="Spotify"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><circle cx="12" cy="12" r="9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 9.4c3.4-.9 7.2-.5 9.6 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.8 12.7c2.8-.7 6-.4 8 .9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.4 15.9c2.2-.5 4.7-.3 6.3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="https://music.apple.com/us/artist/airhockey/1448049999" target="_blank" rel="noopener" aria-label="Apple Music"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M16.4 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3.1-1.6-1.3-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.4 0-2.8.9-3.6 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1.1 1.6 2.2 2.7 2.21 0 1.4-.7 2.7-.7 1.3 0 1.6.7 2.8.7 1.1 0 1.8-1 2.6-2.1.6-.9.8-1.3 1.2-2.2-3.1-1.2-3.1-4.6-3.1-4.9z"/><path d="M14.4 6.2c.6-.7.9-1.7.8-2.7-.8.1-1.9.6-2.5 1.3-.5.7-1 1.7-.9 2.6 1 .1 1.9-.5 2.6-1.2z"/></svg></a>
+      <a href="https://airhockeyband.bandcamp.com" target="_blank" rel="noopener" aria-label="Bandcamp"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M2.2 17.6 8.7 6.4H21.8l-6.5 11.2z"/></svg></a>
+      <a href="https://soundcloud.com/airhockeymusic" target="_blank" rel="noopener" aria-label="SoundCloud"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M2.6 14.4v3.1M5.2 12.6v4.9M7.8 10.9v6.6M10.4 12v5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 17.5V9.2c.9-1.9 2.9-3.1 5-2.8 2.6.3 4.5 2.5 4.4 5.1 0 3-2.3 6-5.2 6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="https://youtube.com/@airhockey" target="_blank" rel="noopener" aria-label="YouTube"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><rect x="2.6" y="5.6" width="18.8" height="12.8" rx="3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.4 9.4 16 12l-5.6 2.6z"/></svg></a>
+    </div>
+
+    <p class="footer-meta">
+      © 2025 airhockey. all rights reserved.<br />
+      <span class="loc">miami, fl</span>
+    </p>
+  </div>
+</footer>
+
+<!-- global shoegaze / VHS wash: soft blur + vignette + grain + scanlines + tracking + glitch + HUD -->
+<div class="fx-soft" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+<div class="fx-grain" aria-hidden="true"></div>
+<div class="fx-scan" aria-hidden="true"></div>
+<div class="fx-track" aria-hidden="true"></div>
+<div class="fx-glitch" aria-hidden="true"></div>
+
+<script>
+  /* ---------- Nav: hide on scroll down, show on scroll up ---------- */
+  (function () {
+    const nav = document.getElementById('nav');
+    let lastY = window.scrollY;
+    let ticking = false;
+    function update() {
+      const y = window.scrollY;
+      nav.classList.toggle('scrolled', y > 40);
+      if (y > lastY && y > 200) nav.classList.add('hidden');
+      else nav.classList.remove('hidden');
+      lastY = y; ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { window.requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  })();
+
+  /* ---------- Mobile menu ---------- */
+  (function () {
+    const burger = document.getElementById('hamburger');
+    const menu = document.getElementById('mobileMenu');
+    function close() {
+      burger.classList.remove('open'); menu.classList.remove('open');
+      burger.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-hidden', 'true');
+    }
+    burger.addEventListener('click', function () {
+      const open = burger.classList.toggle('open');
+      menu.classList.toggle('open', open);
+      burger.setAttribute('aria-expanded', String(open));
+      menu.setAttribute('aria-hidden', String(!open));
+    });
+    menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+
+  /* ---------- Soundtrack: the 8-bit cut of "felt", opt-in ----------
+     Same file and same technique as the game: one decoded buffer looped through Web
+     Audio, because a media element re-primes its decoder on every wrap and drops a
+     hole in the join. The asset is built to loop -- 46 bars at 83.5 BPM with the
+     original's final chord folded back over bar one -- so all that is left is to skip
+     whatever silent frames the decoder pads the ends with.
+     Nothing plays until the button is pressed, and the choice is not remembered:
+     a page that starts making noise on its own is a page people close. */
+  (function () {
+    const btn = document.getElementById('navAudio');
+    if (!btn) return;
+    const SRC = 'music/felt-8bit-loop.m4a';
+    const GAIN = 0.28;      // sits behind the page, not over it
+    const FADE = 1.2;       // seconds to fade up, so it eases in
+    const DUCK = 0.4;       // seconds to fade back down
+    const PAD = 4096;       // cap on the padding search; never eat real audio
+    let ctx = null, gain = null, node = null, el = null, on = false, busy = false;
+
+    function paint() {
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', on ? 'Mute the 8-bit soundtrack'
+                                        : 'Play the 8-bit soundtrack');
+    }
+    function loopWindow(buf) {
+      const ch = buf.getChannelData(0);
+      const quiet = 0.002;                    /* -54 dBFS */
+      let a = 0, b = buf.length;
+      while (a < PAD && Math.abs(ch[a]) < quiet) a++;
+      while (b > buf.length - PAD && Math.abs(ch[b - 1]) < quiet) b--;
+      return { start: a / buf.sampleRate, end: b / buf.sampleRate };
+    }
+    function ramp(to, secs) {
+      if (!gain || !ctx) return;
+      const g = gain.gain, t = ctx.currentTime;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(to, t + secs);
+    }
+    function media() {   /* file:// has no fetch, and very old browsers no Web Audio */
+      if (el) { el.volume = GAIN; const q = el.play(); if (q && q.catch) q.catch(function () {}); return; }
+      if (typeof Audio === 'undefined') { on = false; paint(); return; }
+      el = new Audio(SRC);
+      el.loop = true;
+      el.volume = GAIN;
+      const q = el.play();
+      if (q && q.catch) q.catch(function () { el = null; on = false; paint(); });
+    }
+    function start() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC || typeof fetch !== 'function') { media(); return; }
+      busy = true;
+      ctx = new AC();
+      gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(ctx.destination);
+      if (ctx.resume) ctx.resume();
+      fetch(SRC)
+        .then(function (r) { return r.arrayBuffer(); })
+        .then(function (raw) {
+          return new Promise(function (ok, no) {          /* callback form for old Safari */
+            const ret = ctx.decodeAudioData(raw, ok, no);
+            if (ret && ret.then) ret.then(ok, no);
+          });
+        })
+        .then(function (buf) {
+          busy = false;
+          const win = loopWindow(buf);
+          node = ctx.createBufferSource();
+          node.buffer = buf;
+          node.loop = true;
+          node.loopStart = win.start;
+          node.loopEnd = win.end;
+          node.connect(gain);
+          node.start(0, win.start);
+          ramp(on ? GAIN : 0, FADE);
+        })
+        .catch(function () { busy = false; media(); });
+    }
+    btn.addEventListener('click', function () {
+      on = !on;
+      paint();
+      if (on && !node && !el && !busy) { start(); return; }
+      if (ctx && ctx.resume && on) ctx.resume();
+      ramp(on ? GAIN : 0, on ? FADE : DUCK);
+      if (el) { if (on) { const q = el.play(); if (q && q.catch) q.catch(function () {}); } else el.pause(); }
+    });
+    /* a tab in the background should be silent */
+    document.addEventListener('visibilitychange', function () {
+      if (!on) return;
+      const hidden = !!document.hidden;
+      if (ctx && ctx.suspend) { if (hidden) ctx.suspend(); else ctx.resume(); }
+      if (el) { if (hidden) el.pause(); else { const q = el.play(); if (q && q.catch) q.catch(function () {}); } }
+    });
+    paint();
+  })();
+
+  /* ---------- Scroll-reveal ---------- */
+  (function () {
+    const els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) { els.forEach(function (el) { el.classList.add('in'); }); return; }
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+
+  /* ---------- Hero shooting stars (pastel, glowing) ---------- */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const host = document.getElementById('particles');
+    const colors = ['#d4ffea', '#eecbff', '#feffa3', '#cfe4ff'];
+    const N = 16;
+    for (let i = 0; i < N; i++) {
+      const s = document.createElement('span');
+      s.className = 'star';
+      const ang = (16 + Math.random() * 26).toFixed(1);      // downward diagonal
+      const len = (70 + Math.random() * 110).toFixed(0);      // streak length
+      const travel = (340 + Math.random() * 340).toFixed(0);  // distance flown
+      s.style.setProperty('--ang', ang + 'deg');
+      s.style.setProperty('--len', len + 'px');
+      s.style.setProperty('--travel', travel + 'px');
+      s.style.setProperty('--dur', (Math.random() * 4 + 4).toFixed(1) + 's');
+      s.style.setProperty('--delay', (Math.random() * 9).toFixed(1) + 's');
+      s.style.setProperty('--c', colors[i % colors.length]);
+      s.style.left = (Math.random() * 88 - 4) + '%';
+      s.style.top = (Math.random() * 62 - 8) + '%';
+      host.appendChild(s);
+    }
+  })();
+
+  /* ---------- Signup form ---------- */
+  (function () {
+    const form = document.getElementById('signupForm');
+    const note = document.getElementById('signupNote');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) return;
+      note.textContent = 'thanks — opening your mail app…';
+      const subject = encodeURIComponent('show announcements — sign me up');
+      const body = encodeURIComponent('please add ' + email + ' to the early-access list.');
+      window.location.href = 'mailto:airhockeymgmt@gmail.com?subject=' + subject + '&body=' + body;
+      setTimeout(function () { note.textContent = "you're on the list. talk soon."; }, 1200);
+      form.reset();
+    });
+  })();
+</script>
+</body>
+</html>
