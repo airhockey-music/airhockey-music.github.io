@@ -28,7 +28,7 @@ back to a looser loop. Everything else works either way.
 
 ## Hosting
 
-The site lives at **https://www.airhockeymusic.com**.
+The site lives at **https://airhockeymusic.com**.
 
 The repository root is the site root, so any static host serves it as-is — including
 GitHub Pages, which is what `.nojekyll` is here for. `CNAME` is what tells Pages which

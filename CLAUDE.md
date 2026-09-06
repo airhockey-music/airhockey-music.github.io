@@ -432,18 +432,23 @@ branch -> `main` / `/ (root)`**. There is no build step to configure.
 
 ### The custom domain
 
-`CNAME` in the repository root holds `www.airhockeymusic.com`, and GitHub Pages reads
-that file to decide what host to serve. **Deleting it un-sets the custom domain**, which
-is the classic way a Pages site silently reverts to `github.io` — `sync-all.py` does not
-glob it into the zip either, so it is a repository-only file. DNS lives at GoDaddy: a
-`CNAME` on `www` pointing at the Pages host, plus four `A` records on the apex pointing
-at GitHub's addresses so the bare domain redirects to `www`. Enforce HTTPS only after the
+`CNAME` in the repository root holds `airhockeymusic.com` — the bare apex, no `www`.
+GitHub Pages reads that file to decide what host to serve, so **deleting it un-sets the
+custom domain**, which is the classic way a Pages site silently reverts to `github.io`.
+`sync-all.py` does not glob it into the zip either, so it is a repository-only file.
+
+The Pages host is `airhockey-music.github.io`. DNS lives at GoDaddy and needs **both**
+halves, even though only the apex is canonical: four `A` records on `@` pointing at
+GitHub's addresses (an apex cannot be a CNAME, and GoDaddy has no ALIAS/ANAME), plus a
+`CNAME` on `www` pointing at the Pages host so that spelling still resolves and Pages
+redirects it to the apex. Which way that redirect runs is decided by the one field in
+**Settings -> Pages -> Custom domain**, not by the records. Enforce HTTPS only after the
 certificate has been issued, or Pages will report the domain as unverified.
 
 ## Project facts worth not re-deriving
 
-- **The canonical domain is `https://www.airhockeymusic.com`** (Sebastian's, at
-  GoDaddy, as of 2026-09-06). `www` is canonical and the apex redirects to it. Both
+- **The canonical domain is `https://airhockeymusic.com`** (Sebastian's, at
+  GoDaddy, as of 2026-09-06). The bare apex is canonical; `www` redirects to it. Both
   pages now carry `rel=canonical` and `og:url`; `og:image` and `twitter:image` are
   **absolute** URLs on that domain, which is what makes a link preview show an image at
   all — they were relative before and every scraper ignored them. Any new share tag has
