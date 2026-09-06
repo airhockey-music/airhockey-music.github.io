@@ -37,6 +37,13 @@ of chat. If it reports anything STALE, resolve that before starting new work.
    artifact instead of updating, which breaks the cross-links between them.
 3. `python3 .claude/status.py --mark-published` — records what actually went live.
 
+   One wrinkle worth recognising rather than re-deriving: an edit that only touches
+   the **`<head>`** of either page (SEO, OpenGraph, canonical) changes the source
+   fingerprint but **not** the built artifacts, because both build scripts strip the
+   head and write their own. The banner will say STALE while the live artifacts are in
+   fact byte-identical to a fresh build. Diff the built file before assuming a republish
+   is owed; if it is unchanged, stamping alone is the honest move.
+
 Step 3 is the whole reason a later chat can tell current from stale. Skipping it
 makes every future session report the artifacts as out of date.
 
@@ -423,13 +430,24 @@ the current build instead of the version an artifact's share pin happens to poin
 Enabling it, once a remote exists: repository **Settings -> Pages -> Deploy from a
 branch -> `main` / `/ (root)`**. There is no build step to configure.
 
+### The custom domain
+
+`CNAME` in the repository root holds `www.airhockeymusic.com`, and GitHub Pages reads
+that file to decide what host to serve. **Deleting it un-sets the custom domain**, which
+is the classic way a Pages site silently reverts to `github.io` — `sync-all.py` does not
+glob it into the zip either, so it is a repository-only file. DNS lives at GoDaddy: a
+`CNAME` on `www` pointing at the Pages host, plus four `A` records on the apex pointing
+at GitHub's addresses so the bare domain redirects to `www`. Enforce HTTPS only after the
+certificate has been issued, or Pages will report the domain as unverified.
+
 ## Project facts worth not re-deriving
 
-- **No canonical domain** exists in the pages yet — no `og:url`, no `rel=canonical`;
-  contact is a gmail. Don't invent one. The artifacts cross-link to each other instead.
-  This is the one fact most likely to go stale: the moment GitHub Pages is switched on
-  the site *has* a stable URL, and `og:url` plus `rel=canonical` should be added to
-  `index.html` then — check with Sebastian rather than assuming the address.
+- **The canonical domain is `https://www.airhockeymusic.com`** (Sebastian's, at
+  GoDaddy, as of 2026-09-06). `www` is canonical and the apex redirects to it. Both
+  pages now carry `rel=canonical` and `og:url`; `og:image` and `twitter:image` are
+  **absolute** URLs on that domain, which is what makes a link preview show an image at
+  all — they were relative before and every scraper ignored them. Any new share tag has
+  to be absolute for the same reason.
 - `memory/` in the project root is version history, not code: `archive/` (previous
   source), `artifacts/` (published snapshots), `snapshots/` (full site zips).
   `memory/README.md` is its manifest and the restore instructions.
