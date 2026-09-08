@@ -344,43 +344,10 @@
   .nav-links a.nav-play::after { display: none; }
   .nav-links a.nav-play:hover { background: var(--yellow); transform: translateY(-1px); }
 
-  /* the right-hand group: nav links, the soundtrack toggle, and the burger. Grouping
-     them keeps the links hard right the way they were before the toggle existed. */
+  /* the right-hand group: the nav links and the burger, so the links stay hard
+     right rather than being centred by the flex spread */
   .nav-right { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.4rem); }
 
-  /* The soundtrack is opt-in. A band site that starts playing at you is a band site
-     people close, and this one already has Bandcamp and Spotify players of its own. */
-  .nav-audio {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: none;
-    border: 1px solid var(--line);
-    border-radius: 40px;
-    padding: 0.42em 0.95em;
-    cursor: pointer;
-    color: var(--ink-soft);
-    font-family: inherit;
-    font-size: 0.82rem; font-weight: 500; letter-spacing: 0.1em;
-    transition: color 0.3s var(--ease), border-color 0.3s var(--ease),
-                background 0.3s var(--ease);
-  }
-  .nav-audio:hover { color: var(--ink); border-color: var(--ink-soft); }
-  .nav-audio[aria-pressed="true"] {
-    color: var(--ink); background: var(--mint); border-color: var(--mint-2);
-  }
-  .nav-audio-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
-  .nav-audio-bars i {
-    width: 2px; height: 3px; border-radius: 1px;
-    background: currentColor;
-    transition: height 0.3s var(--ease);
-  }
-  .nav-audio[aria-pressed="true"] .nav-audio-bars i { animation: eq 0.9s ease-in-out infinite; }
-  .nav-audio[aria-pressed="true"] .nav-audio-bars i:nth-child(2) { animation-delay: 0.18s; }
-  .nav-audio[aria-pressed="true"] .nav-audio-bars i:nth-child(3) { animation-delay: 0.36s; }
-  @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 12px; } }
-  @media (prefers-reduced-motion: reduce) {
-    .nav-audio[aria-pressed="true"] .nav-audio-bars i { animation: none; height: 8px; }
-  }
-  @media (max-width: 420px) { .nav-audio-label { display: none; } .nav-audio { padding: 0.42em 0.7em; } }
 
   .hamburger {
     display: none;
@@ -864,11 +831,6 @@
           <li><a href="game.html" class="nav-play">play ▸</a></li>
         </ul>
       </nav>
-      <button type="button" class="nav-audio" id="navAudio" aria-pressed="false"
-              aria-label="Play the 8-bit soundtrack">
-        <span class="nav-audio-bars" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="nav-audio-label">music</span>
-      </button>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu">
         <span></span><span></span><span></span>
       </button>
@@ -1286,102 +1248,6 @@
     });
     menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  })();
-
-  /* ---------- Soundtrack: the 8-bit cut of "felt", opt-in ----------
-     Same file and same technique as the game: one decoded buffer looped through Web
-     Audio, because a media element re-primes its decoder on every wrap and drops a
-     hole in the join. The asset is built to loop -- 46 bars at 83.5 BPM with the
-     original's final chord folded back over bar one -- so all that is left is to skip
-     whatever silent frames the decoder pads the ends with.
-     Nothing plays until the button is pressed, and the choice is not remembered:
-     a page that starts making noise on its own is a page people close. */
-  (function () {
-    const btn = document.getElementById('navAudio');
-    if (!btn) return;
-    const SRC = 'music/felt-8bit-loop.m4a';
-    const GAIN = 0.28;      // sits behind the page, not over it
-    const FADE = 1.2;       // seconds to fade up, so it eases in
-    const DUCK = 0.4;       // seconds to fade back down
-    const PAD = 4096;       // cap on the padding search; never eat real audio
-    let ctx = null, gain = null, node = null, el = null, on = false, busy = false;
-
-    function paint() {
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.setAttribute('aria-label', on ? 'Mute the 8-bit soundtrack'
-                                        : 'Play the 8-bit soundtrack');
-    }
-    function loopWindow(buf) {
-      const ch = buf.getChannelData(0);
-      const quiet = 0.002;                    /* -54 dBFS */
-      let a = 0, b = buf.length;
-      while (a < PAD && Math.abs(ch[a]) < quiet) a++;
-      while (b > buf.length - PAD && Math.abs(ch[b - 1]) < quiet) b--;
-      return { start: a / buf.sampleRate, end: b / buf.sampleRate };
-    }
-    function ramp(to, secs) {
-      if (!gain || !ctx) return;
-      const g = gain.gain, t = ctx.currentTime;
-      g.cancelScheduledValues(t);
-      g.setValueAtTime(g.value, t);
-      g.linearRampToValueAtTime(to, t + secs);
-    }
-    function media() {   /* file:// has no fetch, and very old browsers no Web Audio */
-      if (el) { el.volume = GAIN; const q = el.play(); if (q && q.catch) q.catch(function () {}); return; }
-      if (typeof Audio === 'undefined') { on = false; paint(); return; }
-      el = new Audio(SRC);
-      el.loop = true;
-      el.volume = GAIN;
-      const q = el.play();
-      if (q && q.catch) q.catch(function () { el = null; on = false; paint(); });
-    }
-    function start() {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC || typeof fetch !== 'function') { media(); return; }
-      busy = true;
-      ctx = new AC();
-      gain = ctx.createGain();
-      gain.gain.value = 0;
-      gain.connect(ctx.destination);
-      if (ctx.resume) ctx.resume();
-      fetch(SRC)
-        .then(function (r) { return r.arrayBuffer(); })
-        .then(function (raw) {
-          return new Promise(function (ok, no) {          /* callback form for old Safari */
-            const ret = ctx.decodeAudioData(raw, ok, no);
-            if (ret && ret.then) ret.then(ok, no);
-          });
-        })
-        .then(function (buf) {
-          busy = false;
-          const win = loopWindow(buf);
-          node = ctx.createBufferSource();
-          node.buffer = buf;
-          node.loop = true;
-          node.loopStart = win.start;
-          node.loopEnd = win.end;
-          node.connect(gain);
-          node.start(0, win.start);
-          ramp(on ? GAIN : 0, FADE);
-        })
-        .catch(function () { busy = false; media(); });
-    }
-    btn.addEventListener('click', function () {
-      on = !on;
-      paint();
-      if (on && !node && !el && !busy) { start(); return; }
-      if (ctx && ctx.resume && on) ctx.resume();
-      ramp(on ? GAIN : 0, on ? FADE : DUCK);
-      if (el) { if (on) { const q = el.play(); if (q && q.catch) q.catch(function () {}); } else el.pause(); }
-    });
-    /* a tab in the background should be silent */
-    document.addEventListener('visibilitychange', function () {
-      if (!on) return;
-      const hidden = !!document.hidden;
-      if (ctx && ctx.suspend) { if (hidden) ctx.suspend(); else ctx.resume(); }
-      if (el) { if (hidden) el.pause(); else { const q = el.play(); if (q && q.catch) q.catch(function () {}); } }
-    });
-    paint();
   })();
 
   /* ---------- Scroll-reveal ---------- */

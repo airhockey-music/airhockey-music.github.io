@@ -361,9 +361,14 @@ with nothing to catch it.
   returns immediately unless `music.on`, so the one ♪ button silences everything — which
   is what a player expects from a single control. `rate` detunes repeats so a run of hits
   does not machine-gun one sample.
-- **The game plays it by default, the site does not.** Game: gain `0.35`, starts on the
-  first key or tap, `M` or the ♪ button mutes, remembered in `localStorage`. Site: gain
-  `0.28`, silent until the nav toggle is pressed, deliberately not remembered.
+- **The game plays it; the site is silent.** Game: gain `0.35`, starts on the first key
+  or tap, `M` or the ♪ button mutes, remembered in `localStorage`. The site briefly had
+  an opt-in toggle in the nav; Sebastian removed it on 2026-09-07, which took 2.16 MB
+  out of the site artifact. **Which pages want audio is derived, never assumed** —
+  `sync-all.py`, `music.py` and `build-site-artifact.py` all test `index.html` for the
+  reference rather than hard-coding a rule, so putting it back is a one-file change and
+  taking it away again does not leave a check asserting something stale. `page.py`
+  asserts the reverse too: a toggle reappearing in the nav is a failure.
 - **The build inlines every audio file**, globbed rather than listed, and `fingerprint.py`
   normalises every `music/*.m4a` and `data:audio/…` string so the artifact does not read
   as drift. `sync-all.py` then asserts each file individually — the game carries all five,
