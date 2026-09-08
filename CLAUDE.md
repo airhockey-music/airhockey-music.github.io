@@ -478,13 +478,24 @@ elsewhere — `curl -sI https://airhockeymusic.com/` comes back with essentially
 but `server: GitHub.com`. What *is* available, and the state as of 2026-09-07:
 
 - **Enforce HTTPS** — on. `http://` 301s to `https://`.
-- **A `<meta http-equiv="Content-Security-Policy">` tag** is the only CSP route. Both
-  build scripts slice from `<style>` onward, so a meta tag in either `<head>` reaches the
-  real site and is correctly absent from the artifacts. Not currently added; it needs
-  `'unsafe-inline'` for both style and script because the pages are self-contained, so
-  the win is blocking external script loads, framing and form posts rather than XSS.
-- **No CAA record** is set. The domain is on Let's Encrypt via Pages.
-- **No MX and no SPF**, so no mail is sent from this domain; DMARC is `p=quarantine`.
+- **`CAA 0 issue "letsencrypt.org"`** — only Let's Encrypt, which is what Pages uses,
+  may issue a certificate for this domain.
+- **The domain is deliberately mail-free.** `MX 0 .` (null MX) and `SPF v=spf1 -all`
+  say nothing sends or receives as `@airhockeymusic.com`; contact everywhere is
+  `airhockeymgmt@gmail.com`, which is what `index.html` links. Sebastian confirmed this
+  posture on 2026-09-07 — **do not add an MX record** without checking, it is a choice
+  rather than an omission. Because nothing legitimately sends as the domain, DMARC can
+  safely sit at `p=reject`.
+- **Leave the DMARC `rua` pointing at GoDaddy.** Redirecting reports to a gmail address
+  looks obvious and does not work: DMARC external reporting requires the *receiving*
+  domain to publish `airhockeymusic.com._report._dmarc.gmail.com`, and you cannot add
+  records to `gmail.com`, so most reporters simply refuse to send.
+- **A CSP is close to theatre here and was deliberately skipped.** A meta tag is the only
+  route, and the directive that would matter most — `frame-ancestors`, for clickjacking —
+  is **ignored in a meta tag by specification**. What is left restricts where scripts and
+  styles may load from, on a page with no user input, no login and no third-party JS; the
+  realistic threat is a repo compromise, and anyone who can do that can edit the tag in
+  the same commit.
 - Every one of the 36 `target="_blank"` links already carries `rel="noopener"`.
 
 ## Project facts worth not re-deriving
