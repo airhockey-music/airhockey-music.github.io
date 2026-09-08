@@ -692,6 +692,43 @@
     font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--ink-faint); margin-top: 1rem;
   }
+  /* ---- upcoming shows. The list in the markup sits between a pair of HTML comment
+     markers so the weekly Linktree check can rewrite exactly that block and nothing
+     else; the marker strings are deliberately not repeated here. ---- */
+  .show-list { list-style: none; max-width: 760px; margin: 3rem auto 0; display: grid; gap: 1.2rem; }
+  .show {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: center;
+    text-align: left;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.3rem clamp(1.1rem, 3vw, 1.8rem);
+    box-shadow: 4px 5px 0 var(--mint-2);
+    transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  }
+  .show:hover { transform: translateY(-3px); box-shadow: 5px 7px 0 var(--pink-2); }
+  .show-date {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 74px; padding: 0.5rem 0.7rem; border-radius: 10px;
+    background: var(--mint); border: 1px solid var(--line);
+  }
+  .show-date .dow { font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); }
+  .show-date .day { font-family: var(--font-head); font-size: 1.9rem; font-weight: 600; line-height: 1; color: var(--ink); }
+  .show-date .mon { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--pink-2); font-weight: 600; }
+  .show-venue { font-family: var(--font-head); font-size: 1.5rem; font-weight: 600; color: var(--ink); line-height: 1.1; }
+  .show-where { font-size: 0.82rem; color: var(--ink-faint); margin-top: 0.15rem; }
+  .show-bill { font-size: 0.86rem; color: var(--ink-body); margin-top: 0.5rem; line-height: 1.5; }
+  .show-meta { display: flex; flex-direction: column; gap: 0.25rem; text-align: right; }
+  .show-meta span { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
+  .show-meta .free { color: var(--pink-2); font-weight: 600; }
+  @media (max-width: 640px) {
+    .show { grid-template-columns: auto 1fr; }
+    .show-meta { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 0.8rem; text-align: left; }
+  }
+
   .shows-empty {
     font-family: var(--font-head); font-style: italic;
     font-size: clamp(1.4rem, 4vw, 2.2rem); color: var(--ink-soft);
@@ -1091,7 +1128,26 @@
       <figcaption>airhockey, live in miami</figcaption>
     </figure>
 
-    <p class="shows-empty reveal" data-delay="1">no upcoming shows announced — follow us for updates.</p>
+    <!-- SHOWS:BEGIN — rewritten by the weekly Linktree check; keep these markers -->
+    <ul class="show-list reveal" data-delay="1">
+      <li class="show" data-date="2026-10-03">
+        <div class="show-date">
+          <span class="dow">sat</span><span class="day">03</span><span class="mon">oct</span>
+        </div>
+        <div class="show-info">
+          <h3 class="show-venue">Las Rosas</h3>
+          <p class="show-where">2898 NW 7th Ave, Miami, FL 33127</p>
+          <p class="show-bill">live with augusto &middot; ana no duerme<br />
+            dj sets by micelady &middot; moni musique</p>
+        </div>
+        <div class="show-meta">
+          <span>10 pm doors</span>
+          <span class="free">no cover</span>
+          <span>21+</span>
+        </div>
+      </li>
+    </ul>
+    <!-- SHOWS:END -->
 
     <form class="signup reveal" data-delay="2" id="signupForm">
       <label for="email">get early access to show announcements</label>

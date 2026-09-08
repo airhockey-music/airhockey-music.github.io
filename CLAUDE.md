@@ -375,6 +375,27 @@ with nothing to catch it.
   the site carries only the loop — because none of it appears in the fingerprints and a
   silent build otherwise looks perfectly healthy.
 
+## Upcoming shows, and the weekly check
+
+The Shows section lists gigs between `<!-- SHOWS:BEGIN` and `<!-- SHOWS:END -->` in
+`index.html`. **Keep those markers**: a scheduled task rewrites exactly that block and
+has nowhere to write without them. Each entry is an `<li class="show"
+data-date="YYYY-MM-DD">` — the attribute is what makes the listing machine-checkable,
+and `page.py` fails on a show whose date has passed, which is the way an automated
+updater goes wrong quietly.
+
+A weekly task (`airhockey-show-check`, Mondays) scans **https://linktr.ee/airhockey**,
+which is genuinely the band's — it links the Bigcartel, Bandcamp and DistroKid pages —
+and is server-rendered, so a plain fetch reads it.
+
+**Instagram cannot be scanned and it is not worth retrying.** Tested 2026-09-07:
+`https://www.instagram.com/airhockeyband` returns HTTP 200 and 620KB of JavaScript shell
+with **no `og:title`, no `og:description` and no captions**. Everything is behind auth.
+Bandcamp has no shows section either. Linktree is the only readable source, and if a
+flyer image cannot be found the task is told to say so rather than substitute anything.
+Chat attachments never reach the filesystem, so a flyer has to be placed in the project
+folder by hand.
+
 ## The site's live data
 
 `index.html` carries hand-written copy, but three parts of it mirror things that live
