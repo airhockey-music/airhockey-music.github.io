@@ -37,6 +37,12 @@ of chat. If it reports anything STALE, resolve that before starting new work.
    artifact instead of updating, which breaks the cross-links between them.
 3. `python3 .claude/status.py --mark-published` — records what actually went live.
 
+   The site's fingerprint covers `index.html` **and the content of every asset the
+   build inlines** (`site_fingerprint()`). It has to: hashing the markup alone once
+   reported "everything matches" straight after all three member photos were replaced,
+   because the markup never moved — the published site would have kept the old faces
+   indefinitely. Hashing by content also catches a re-crop that reuses a filename.
+
    One wrinkle worth recognising rather than re-deriving: an edit that only touches
    the **`<head>`** of either page (SEO, OpenGraph, canonical) changes the source
    fingerprint but **not** the built artifacts, because both build scripts strip the
@@ -397,7 +403,11 @@ elsewhere and go stale:
   `sips -c H W --cropOffset Y X` — that offset is the crop's **top-left corner** in
   source pixels, except that `0 0` is special-cased to mean centred. `page.py` checks
   each headshot is at least twice its rendered circle, since a crop that is too small
-  goes soft rather than failing.
+  goes soft rather than failing. As of 2026-09-07 the three are 400px crops cut from
+  2048x2560 live shots in `memory/archive/2026-09-07_2047/original-members/`, replacing
+  night-shot crops with laughing expressions. That check earned itself the same day:
+  Sebastian first sent phone screenshots of the frames he wanted, 238-282px, and it
+  refused all three rather than shipping faces that upscale.
 - **Sleeve art** — every release on the site has real art in `art/`, named
   lowercase-hyphenated to match its Bandcamp slug, 700px square, ~60-140KB. New art
   arrives full-size; run it through `sips -Z 700 -s format jpeg -s formatOptions 78`
@@ -454,6 +464,23 @@ GitHub's addresses (an apex cannot be a CNAME, and GoDaddy has no ALIAS/ANAME), 
 redirects it to the apex. Which way that redirect runs is decided by the one field in
 **Settings -> Pages -> Custom domain**, not by the records. Enforce HTTPS only after the
 certificate has been issued, or Pages will report the domain as unverified.
+
+## What the live site can and cannot be hardened with
+
+GitHub Pages serves static files and **does not let you set response headers**. That
+rules out HSTS, `X-Frame-Options` and a header-based CSP no matter what you read
+elsewhere — `curl -sI https://airhockeymusic.com/` comes back with essentially nothing
+but `server: GitHub.com`. What *is* available, and the state as of 2026-09-07:
+
+- **Enforce HTTPS** — on. `http://` 301s to `https://`.
+- **A `<meta http-equiv="Content-Security-Policy">` tag** is the only CSP route. Both
+  build scripts slice from `<style>` onward, so a meta tag in either `<head>` reaches the
+  real site and is correctly absent from the artifacts. Not currently added; it needs
+  `'unsafe-inline'` for both style and script because the pages are self-contained, so
+  the win is blocking external script loads, framing and form posts rather than XSS.
+- **No CAA record** is set. The domain is on Let's Encrypt via Pages.
+- **No MX and no SPF**, so no mail is sent from this domain; DMARC is `p=quarantine`.
+- Every one of the 36 `target="_blank"` links already carries `rel="noopener"`.
 
 ## Project facts worth not re-deriving
 
