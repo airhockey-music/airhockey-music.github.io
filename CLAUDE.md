@@ -241,6 +241,17 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   untouched from the sweep it replaced — if the snap should reach further than the old
   arc, that is a balance change and `checks/gameplay.js` will hold you to the 1.0–2.5s
   contact band.
+- **Every weapon's swing is exercised by `checks/weapons.js`, and it exists for a
+  reason.** Rewriting the cable from a coil to a whip left a block of the *old* code
+  below the new one, still referencing a variable the rewrite had deleted. Every swing
+  threw inside `drawFx`, which kills the rAF loop — the game froze the instant you
+  picked the cable up, on desktop and phone alike — and **the entire suite stayed
+  green**, because nothing ever equipped a weapon and swung it. This is the same
+  splicing hazard as the `drawFx` branch-order trap, in its other form: cutting *to* a
+  marker that is not the end of the branch orphans whatever follows. After any edit to
+  an fx branch, run the weapons check; a freeze shows up there as `RUNTIME FAIL: no rAF
+  scheduled`.
+
 - **Unarmed, you shove.** `SHOVE` is knockback and nothing else — it never touches
   `hp`, so it cannot kill. It needs no stage check: gear is never taken away once you
   have it, so the only time you carry nothing is the front entrance before the strings

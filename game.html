@@ -3408,20 +3408,6 @@
         }
       }
       ctx.globalAlpha = 1;
-
-      // the plug on the end: black collar, metal barrel, laid along the lead
-      const ux = Math.cos(ang), uy = Math.sin(ang);
-      const pbx = Math.round(tipX - ux * 3), pby = Math.round(tipY - uy * 3);
-      ctx.strokeStyle = '#0d0b14';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(pbx, pby); ctx.lineTo(Math.round(tipX), Math.round(tipY));
-      ctx.stroke();
-      ctx.strokeStyle = '#c9c4b4';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(pbx + ux, pby + uy); ctx.lineTo(Math.round(tipX), Math.round(tipY));
-      ctx.stroke();
     }
   }
 
