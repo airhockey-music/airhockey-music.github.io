@@ -384,7 +384,7 @@ data-date="YYYY-MM-DD">` — the attribute is what makes the listing machine-che
 and `page.py` fails on a show whose date has passed, which is the way an automated
 updater goes wrong quietly.
 
-A weekly task (`airhockey-show-check`, Mondays) scans **https://linktr.ee/airhockey**,
+A weekly task (`airhockey-show-check`, Mondays at 7pm) scans **https://linktr.ee/airhockey**,
 which is genuinely the band's — it links the Bigcartel, Bandcamp and DistroKid pages —
 and is server-rendered, so a plain fetch reads it.
 
@@ -527,6 +527,17 @@ but `server: GitHub.com`. What *is* available, and the state as of 2026-09-07:
 
 ## Project facts worth not re-deriving
 
+- **The game's back link is `href="/"`, not `index.html`** — so the URL bar never shows
+  a filename. `build-artifact.py` rewrites that exact string to the published site URL
+  and refuses either form surviving into the artifact. It does mean the back link needs
+  a served root: `python3 -m http.server` is fine, opening `game.html` straight off the
+  disk is not.
+- **Caching is capped by GitHub Pages at `max-age=600` and cannot be changed** — there
+  are no response headers to set. `index.html` carries `Cache-Control`/`Pragma` meta
+  tags, which browsers honour inconsistently for the document itself but cost nothing.
+  Ten minutes is the floor for a stale page; anything longer is the visitor's own disk
+  cache, not the server. This is why a change looks live in a private window and not in
+  a normal one.
 - **The canonical domain is `https://airhockeymusic.com`** (Sebastian's, at
   GoDaddy, as of 2026-09-06). The bare apex is canonical; `www` redirects to it. Both
   pages now carry `rel=canonical` and `og:url`; `og:image` and `twitter:image` are
