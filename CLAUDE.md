@@ -132,7 +132,8 @@ reason the suite has ever caught anything. The pieces, if you need to iterate on
 | `rescale.py` | resamples a capture to a real phone width, with no image library — this is how the floor-banding bug was found |
 | `layout.js` | measures the wide and 9:16 portrait layouts in a phone-sized webview |
 | `page.py` / `page.js` | the **site**, not the game: loads `index.html` in a real WKWebView and reports broken images, store-tile layout, release order, every bigcartel link, and any asset that ships without being referenced |
-| `music.py` | the soundtrack asset: bar alignment, the level either side of the join, and that neither end is silent |
+| `music.py` | the soundtrack asset: bar alignment, the level either side of the join, and that the head is not silent |
+| `sfx.py` | **authors** all five audio files from the archived master; `--check` validates what shipped |
 | `audio.py` | decodes the artifact's inlined audio in a real WKWebView and reads the loop points back |
 | `checks/music.js` | the wiring: gain, the mute key, and `loopWindow()` against synthetic buffers |
 
@@ -170,7 +171,8 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   `A` amp  `c` crate  `r` rope pole  `b` barricade  `s` PA stack  `p` planter
   `g` guitar stand  `y` keyboard  `k` drum kit  `i` mic stand  `o` bar stool
   `B` back bar  `j` jukebox  `x` candelabra  `f` flyer wall  `t` toilet
-  `w` washbasin  `G` security gate  `D` exit door. Everything but `.`, `~`, `G`
+  `w` washbasin  `S` range/stove  `F` fridge  `P` pot rack
+  `G` security gate  `D` exit door. Everything but `.`, `~`, `G`
   and `D` is solid. Add a character in three places: `SOLID`, the `drawMap`
   dispatch, and `levels.py`.
 - **The gear moves every run.** `rollItemSpot()` re-rolls the item's tile in
@@ -222,15 +224,17 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   four monotonic runs, and that every room's own gear against that room's own elite
   stays inside a 1.0–2.5s band of contact time. Raise a weapon and the band check is
   what will catch you.
-- **The cable is drawn as a coiled lead.** Earlier passes drew the swing as a bare
-  semi-circle and it read as a scythe. It is now a helix laid along the line from the
-  player's hand to a 1/4" plug, and the arc it covers is expressed as *motion* — a
-  faint wash of the swept wedge plus one fading ghost of the coil. Do not put the solid
-  arc back; the coverage has to come from the trail. Two numbers make the helix read as
-  a spring rather than a zigzag: enough samples per turn (`STEPS`, ~30 per coil) that
-  the loops are round, and an axial lean of about half the pitch so each loop closes on
-  itself. `grip` tapers the amplitude to nothing at both ends, or the lead sprouts a
-  loop where it leaves his hand.
+- **The cable is a whip, not a coil.** It throws out along the facing on a sine ease
+  over the first third of its life and then recoils — there is no rotation left in it.
+  The lead bows sideways while travelling and straightens as it lands, which is what
+  reads as a crack rather than a poke; at full stretch it throws a ring and three sparks
+  off the plug. Two earlier passes are worth not repeating: a bare semi-circle read as a
+  scythe, and the helix that replaced it read as a spring being wound. It is outlined in
+  **white** under a dark core, because this is the one weapon carried through several
+  rooms and the black cord vanished into the late floors. The hit box and damage are
+  untouched from the sweep it replaced — if the snap should reach further than the old
+  arc, that is a balance change and `checks/gameplay.js` will hold you to the 1.0–2.5s
+  contact band.
 - **Unarmed, you shove.** `SHOVE` is knockback and nothing else — it never touches
   `hp`, so it cannot kill. It needs no stage check: gear is never taken away once you
   have it, so the only time you carry nothing is the front entrance before the strings
@@ -271,17 +275,22 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   ending line is kept under ~28 characters because `drawFittedCenter` shrinks to fit
   rather than wrapping and the portrait screen is only 180 wide — there is a check.
 - **The drummer's sticks are drawn in three passes.** Sprite, then the kit over him,
-  then `drawDrumsticks()` over the kit. `DRUMMER_SEATED` strips the `Y` pixels out of
+  then `drawDrumsticks()` over the kit. They are **static** — they used to bob on a
+  wall-clock sine, which read as a twitch rather than a performance — and they carry no
+  outline, because the dark backing behind them read as a smudge at this size. `DRUMMER_SEATED` strips the `Y` pixels out of
   `DRUMMER_SHAPE` first, or he ends up holding four sticks. Do not draw a forearm —
   the sprite already has arms, and a drawn one grows out of his jaw.
-- **`hang` keeps an instrument's neck off a face.** `drawStrungInstrument` builds a
-  body from three ellipses (upper bout, pinched waist, lower bout) painted twice —
-  once oversized in the outline colour, once at size — because stroking each bout
-  separately outlines them as circles and the whole thing reads as a snowman. Two
-  ellipses and a narrow strip, which is what it was, tapers from a small circle to a
-  big one and reads as a wedge. `hang` is how far off centre the instrument sits, and
-  it is load-bearing: Mel's face is only four pixels wide, so a neck at `hang: 4`
-  covered a whole lens of her glasses.
+- **The guitar and bass are pixel sprites**, `GUITAR_SHAPE` (27x11) and `BASS_SHAPE`
+  (31x11, the same instrument with four more frets), drawn from Sebastian's reference:
+  an offset solid body with horns, a fretted board, a pickguard and a bridge. They used
+  to be composed from three ellipses, which is an acoustic silhouette however you tune
+  it. `sprites.py --check` asserts every row's width and that every character has a
+  palette entry. Two things the screenshots caught and code review would not: at full
+  band scale the sprites are **taller than the people holding them**, so they draw at
+  ~0.7 of it; and the reference's charcoal fretboard is invisible against the dark
+  stage, so `n` is warm rosewood here. `hang` survives from the old version and is still
+  load-bearing — Mel's face is four pixels wide, so a neck on centre covers a lens of
+  her glasses.
 - **The bathroom is deliberately dim.** It used to be near-white and glared next to
   every other room, and nothing dropped on that floor stood out. The whole `bathroom`
   theme sits about 20% darker now, and the cable's plate is yellow (`ITEM_COLOR.cable`)
@@ -315,44 +324,45 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   compass directions and sets the very same `keys.up/down/left/right` flags the
   keyboard sets, so desktop behaviour is untouched by anything in that block.
 
-## The soundtrack
+## The soundtrack and the sound effects
 
-`music/felt-8bit-loop.m4a` is the 8-bit cut of *felt*, and **it is the loop** — not a
-song that gets looped. Both pages play it, and both treat the file as already seamless:
+`.claude/test/sfx.py` **authors all five audio files** from the archived master, the way
+`levels.py` authors the maps. The files in `music/` are output — never hand-edit one,
+and never swap one in without re-running the generator, or the loop drifts off the beat
+with nothing to catch it.
 
-- **It is 46 bars at 83.5 BPM (132.216s).** The master was 47 bars; the loop is built by
-  folding bar 47 — the final chord — back over bar 1 **at full volume**, tail fading out
-  over a raised cosine, head untouched. Fading the head in too is the obvious mistake and
-  it kills the opening arpeggio on every wrap. Because the fold is exactly one bar, the
-  chord still lands on a downbeat and the wrap is on the grid. `music.py` re-derives the
-  bar count from the file and fails if it is not whole.
-- **It is AAC, because this Mac cannot encode MP3.** There is no `ffmpeg` or `lame` here
-  and `afconvert` has no MP3 encoder — only AAC. `afconvert -f m4af -d aac -s 2 -b 112000`
-  gives ~96 kbps average, 1.58 MB, which matters because it is base64'd into *both*
-  artifacts. The 320 kbps master, the source WAV and a 16-second seam preview are in
+- **The loop is the whole 47-bar master, wrapping at its true end** (135.090s, 12ms off
+  the grid — inaudible). It used to be 46 bars with the final chord folded back over the
+  first; Sebastian asked for the plain end instead. The catch that fold was hiding: a
+  ringing chord meeting a sparse intro is a **+7.7 dB jump**. Measured against the first
+  250ms of the track, a **250ms release** lands the tail within +2.2 dB of the intro —
+  400ms overshoots to −3.5 dB. It costs a third of a beat of decay, and because it is a
+  fade the file length and so the grid are untouched.
+- **The effects are cut from the same master**, which is why a hit sounds like it
+  belongs in the song. `sfx-hit` is the x518 attack at 11.494s pitched down; `sfx-collect`
+  is the isolated intro blip at 0.720s played twice a fifth apart; `sfx-heal` is a chord
+  from 32.9s an octave up, eased in and out. **`sfx-cheer` is the exception — it is
+  synthesised**, filtered noise plus clap transients, because there is no crowd anywhere
+  in the master and a real recording sits badly against square waves.
+- **AAC, because this Mac cannot encode MP3.** No `ffmpeg`, no `lame`, and `afconvert`
+  has no MP3 encoder. The 320 kbps master, the source WAV and a seam preview are in
   `memory/archive/2026-09-06_1435/original-music/`.
 - **Web Audio, not `<audio loop>`.** A media element re-primes its decoder on every wrap
-  and drops a hole in the join. Both pages decode once and loop one buffer. `loopWindow()`
-  finds the real edges by amplitude, capped at `MUSIC_PAD` frames, so a decoder that
-  ignores the MP4 edit list and pads the ends cannot introduce a gap — and a quiet bar
-  can never be eaten as padding. There is an `<audio>` fallback for `file://`, where
-  `fetch` is blocked; its loop is looser, and that is the trade.
+  and drops a hole in the join. Both pages decode once and loop one buffer; `loopWindow()`
+  finds the real edges by amplitude, capped at `MUSIC_PAD`, so a decoder that ignores the
+  MP4 edit list cannot introduce a gap. There is an `<audio>` fallback for `file://`.
+- **The effects share the music's context, gain policy and mute.** `playSfx(name, rate)`
+  returns immediately unless `music.on`, so the one ♪ button silences everything — which
+  is what a player expects from a single control. `rate` detunes repeats so a run of hits
+  does not machine-gun one sample.
 - **The game plays it by default, the site does not.** Game: gain `0.35`, starts on the
-  first key or tap (browsers block autoplay before a gesture), `M` or the ♪ button mutes,
-  and the choice persists in `localStorage` under `airhockey.music`. Site: gain `0.28`,
-  silent until the nav toggle is pressed, and deliberately **not** remembered — a band
-  site that starts playing at you is a band site people close. Both suspend on
-  `visibilitychange`.
-- **The build inlines it the way it inlines the logo.** `build-artifact.py` and
-  `build-site-artifact.py` swap the path for a `data:audio/mp4` URI, and
-  `fingerprint.py` normalises `MUSIC_SRC` so the artifact does not read as drift.
-  `sync-all.py` globs `MEDIA_DIRS` into the zip and then **asserts** the audio is in all
-  three copies — none of it shows up in the fingerprints, so a silent build looks
-  perfectly healthy otherwise. `mkdebug.py` sets `music.dead = true`, which is what keeps
-  screenshots and layout probes from fetching it.
-- **Re-rendering it means re-running everything.** New audio is not a drop-in: rebuild
-  with `sync-all.py`, then `music.py` and `audio.py`, or the loop can go off the beat
-  without anything else noticing.
+  first key or tap, `M` or the ♪ button mutes, remembered in `localStorage`. Site: gain
+  `0.28`, silent until the nav toggle is pressed, deliberately not remembered.
+- **The build inlines every audio file**, globbed rather than listed, and `fingerprint.py`
+  normalises every `music/*.m4a` and `data:audio/…` string so the artifact does not read
+  as drift. `sync-all.py` then asserts each file individually — the game carries all five,
+  the site carries only the loop — because none of it appears in the fingerprints and a
+  silent build otherwise looks perfectly healthy.
 
 ## The site's live data
 
