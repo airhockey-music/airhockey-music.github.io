@@ -403,7 +403,13 @@ elsewhere and go stale:
   pastel `.product-art` tile showing through and must not be flattened to JPEG.
 - **Band photos** — `photos/` is **globbed into the upload zip**, so it holds only what
   `index.html` actually references; unused frames belong in `memory/archive/<stamp>/
-  original-photos/`. The three member headshots in `members/` are 400px crops taken out
+  original-photos/`, and `page.py` now fails on any asset that ships unreferenced.
+  `live-band.jpg` is the Shows image: a **1600px resize** of a 6774x4492 scan archived
+  under `2026-09-07_2133`. The frame renders at 860px, so 1600 is a retina-grade source
+  — the full scan is 20MB and would land in the repo, the zip *and* the site artifact.
+  Its alt text deliberately does not name who is on stage: the frame is a multiple
+  exposure, and the text it replaced claimed two specific members of a shot that had
+  changed. The three member headshots in `members/` are 400px crops taken out
   of one group shot (`original-photos/band-bench.jpg`) with
   `sips -c H W --cropOffset Y X` — that offset is the crop's **top-left corner** in
   source pixels, except that `0 0` is special-cased to mean centred. `page.py` checks
