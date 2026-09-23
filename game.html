@@ -470,12 +470,16 @@
   // AudioContext and the same on/off switch as the music: one mute for everything,
   // which is what a player expects from a single button.
   const SFX_SRC = {
+    swing:   'music/sfx-swing.m4a',
     hit:     'music/sfx-hit.m4a',
+    boss:    'music/sfx-boss.m4a',
     collect: 'music/sfx-collect.m4a',
     heal:    'music/sfx-heal.m4a',
     cheer:   'music/sfx-cheer.m4a',
   };
-  const SFX_GAIN = { hit: 0.5, collect: 0.62, heal: 0.42, cheer: 0.66 };
+  // The swing fires on every attack, several times a second, so it is mixed far below
+  // everything else -- at hit level it turns into a rattle within a minute of play.
+  const SFX_GAIN = { swing: 0.17, hit: 0.5, boss: 0.62, collect: 0.62, heal: 0.42, cheer: 0.66 };
   const sfxBuf = {};
 
   function loadSfx() {
@@ -1442,20 +1446,24 @@
     o: '#171225', H: '#241a2e', J: '#3d2d42', f: '#e3ab7d', d: '#c68f5c',
     l: '#a8c8e8', e: '#171225', w: '#5a7bc4', y: '#3f5a94', a: '#cfe4ff', p: '#9aa5c9', b: '#171225',
   };
-  // A narrow face inside a lot of hair: the jaw tapers from four pixels to two over
-  // the last three rows, and the round glasses sit a pixel proud of the cheeks on
-  // each side. An eight-wide face read as a much heavier person than Mel is.
+  // Six pixels of face inside a lot of hair. An earlier pass ran it at four, tapering
+  // to two at the jaw, on the reasoning that an eight-wide face read as a heavier
+  // person than Mel is -- but the others ARE eight, narrowing to six, so four read as
+  // gaunt rather than slim. Six tapering to four keeps her two pixels narrower than
+  // Sebastian and Mike at every row, which is the difference the design wanted, while
+  // sitting in the same language as their heads. The volume of hair and the round
+  // glasses are what carry the rest.
   const MEL_HEAD_FRONT = [
     seg('.', 1, 'H', 14, '.', 1),
     seg('.', 1, 'H', 3, 'J', 2, 'H', 4, 'J', 2, 'H', 3, '.', 1),
-    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
-    seg('.', 1, 'H', 4, 'o', 1, 'f', 4, 'o', 1, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'o', 2, 'f', 2, 'o', 2, 'H', 4, '.', 1),
     seg('.', 1, 'H', 4, 'l', 1, 'e', 1, 'f', 2, 'e', 1, 'l', 1, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'o', 1, 'f', 4, 'o', 1, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'o', 2, 'f', 2, 'o', 2, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
+    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
     seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
-    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
-    seg('.', 1, 'H', 6, 'f', 2, 'H', 6, '.', 1),
-    seg('H', 7, 'f', 2, 'H', 7),
+    seg('H', 6, 'f', 4, 'H', 6),
     seg('H', 3, 'w', 10, 'H', 3),
   ];
   const MEL_HEAD_BACK = [
@@ -1474,8 +1482,8 @@
   const MEL_SIDE_HEAD = [
     seg('.', 2, 'H', 10, '.', 4),
     seg('.', 2, 'H', 2, 'J', 4, 'H', 4, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 4, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 1, 'o', 2, 'f', 1, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 5, 'f', 5, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 5, 'f', 2, 'o', 2, 'f', 1, 'H', 1, '.', 4),
     seg('.', 1, 'H', 6, 'f', 1, 'l', 1, 'e', 1, 'l', 1, 'H', 1, '.', 4),
     seg('.', 1, 'H', 6, 'f', 1, 'o', 2, 'f', 1, 'H', 1, '.', 4),
     seg('.', 1, 'H', 6, 'f', 5, '.', 4),
@@ -2178,7 +2186,7 @@
   }
 
   function damageBoss(b, dmg, knock, fromX, fromY) {
-    playSfx('hit', 0.82 + Math.random() * 0.1);   // heavier for an elite
+    playSfx('boss', 0.94 + Math.random() * 0.12);   // elites land differently
     if (!b || b.hp <= 0) return;
     const spec = BOSS_KINDS[b.kind];
     b.hp -= dmg;
@@ -3183,6 +3191,9 @@
   function tryAttack() {
     const w = WEAPONS[player.weaponItem];
     if (!w) return;
+    // every swing is heard, landed or not -- the miss is half of what makes a hit
+    // feel like a hit. Detuned per swing so a run of them does not sound mechanical.
+    playSfx('swing', 0.9 + Math.random() * 0.22);
     player.attackCooldown = w.cd;
     player.attackTimer = 0.15;
     const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
@@ -3671,7 +3682,7 @@
   // ---------- Mel doesn't follow you. She tears around the room keeping her
   // distance — further and faster every stage — and only stands still for the length
   // of a bass blast. Tracking her down is half the cost of the heal. ----------
-  function melSpeed()    { return 74 + stage.index * 14; }   //  74 .. 144 px/s
+  function melSpeed()    { return 62 + stage.index * 12; }   //  62 .. 122 px/s
   function melKeepAway() { return 44 + stage.index * 22; }   //  44 .. 154 px
 
   function openTile(col, row) {

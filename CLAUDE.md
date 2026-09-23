@@ -272,6 +272,12 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   names the item, then the room's elite, then the door. There is deliberately **no**
   off-screen pointer — finding things is meant to be the work. Landmarks mounted on a
   room's top wall must sit below world y ≈ 28 or the banner covers them.
+- **Mel's face is six pixels wide, tapering to four.** Sebastian and Mike are eight
+  tapering to six, and an earlier pass ran Mel at four tapering to two on the reasoning
+  that eight read as heavier than she is. It overshot — at four she read as gaunt. Two
+  pixels narrower than the others at every row is the difference the design wanted; the
+  hair volume and the round glasses carry the rest. `melSpeed()` is `62 + stage.index
+  * 12` (62–122 px/s), eased down from 74–144 because she outran the room.
 - **Mel is not a companion.** She runs the room on her own (`updateMel`), faster and
   further away each stage, and drops her **bass boost** wherever she happens to be.
   She leaves fading footprints (`mel.trail`, alternating left/right along her heading,
@@ -356,11 +362,23 @@ with nothing to catch it.
   400ms overshoots to −3.5 dB. It costs a third of a beat of decay, and because it is a
   fade the file length and so the grid are untouched.
 - **The effects are cut from the same master**, which is why a hit sounds like it
-  belongs in the song. `sfx-hit` is the x518 attack at 11.494s pitched down; `sfx-collect`
-  is the isolated intro blip at 0.720s played twice a fifth apart; `sfx-heal` is a chord
-  from 32.9s an octave up, eased in and out. **`sfx-cheer` is the exception — it is
-  synthesised**, filtered noise plus clap transients, because there is no crowd anywhere
-  in the master and a real recording sits badly against square waves.
+  belongs in the song. `sfx-hit` is the x518 attack at 11.494s pitched down; `sfx-boss`
+  is that same attack dropped to 0.58 and saturated, so an elite landing is a different
+  event rather than the same click lower; `sfx-collect` is the isolated intro blip at
+  0.720s played twice a fifth apart; `sfx-heal` is the bass boost. **`sfx-swing` and
+  `sfx-cheer` are synthesised**, filtered noise — there is no crowd anywhere in the
+  master, and a swing wants air rather than pitch.
+- **`sfx-swing` fires on every attack, landed or not, and is mixed at `0.17`** against
+  the hit's `0.5`. That gap is the whole design: it plays several times a second, and at
+  anything near hit level it becomes a rattle within a minute. `tryAttack` detunes each
+  one so a run does not sound mechanical.
+- **`sfx.py` has real effects in it** — `lowpass`, `echo`, `saturate`, `reverse` — hand
+  rolled because there is no numpy. That is what makes several sounds available from one
+  master instead of needing more samples. The bass boost went through this: a straight
+  octave-up chord read as chipmunked, so `build_heal` now offers `bloom` (reversed,
+  swelling into a delay — what ships), `fifth` and `bell`. `HEAL_VARIANT` at the top of
+  the file picks one; `sfx.py --variants` writes all three to the project root to listen
+  to without shipping them.
 - **AAC, because this Mac cannot encode MP3.** No `ffmpeg`, no `lame`, and `afconvert`
   has no MP3 encoder. The 320 kbps master, the source WAV and a seam preview are in
   `memory/archive/2026-09-06_1435/original-music/`.
@@ -412,6 +430,13 @@ folder by hand.
 `index.html` carries hand-written copy, but three parts of it mirror things that live
 elsewhere and go stale:
 
+- **The press quote must be real.** It is a pull quote attributed to a named
+  publication, so inventing one is fabricating a record — never write it, find it. As of
+  2026-09-22 it is START TRACK, September 2026, on *nice day*. It replaced a 2019 High
+  Clouds line that compared the band to another act, which Sebastian did not want.
+  Known real coverage, none of it naming other bands: **START TRACK** (14 Sep 2026),
+  **KALTBLUT** (11 Jul 2019, Colette Pomerleau — "greyscale palm tree lines, power lines
+  cutting pink sunsets"), **Miami New Times**, **High Clouds**.
 - **Latest release / discography** — from `https://airhockeyband.bandcamp.com/music`.
   That page is **hand-arranged, not date-ordered** (it puts *hazel* above *little
   friday*, which is wrong by three months), so take the date off each track page and
