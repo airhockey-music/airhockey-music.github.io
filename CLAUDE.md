@@ -77,6 +77,28 @@ under `favicon` in `.claude/artifact-links.json`.
 Both artifacts must go together: they cross-link to each other the way `index.html`
 and `game.html` do locally, so republishing one alone leaves a half-updated site.
 
+## Preview copies — look before it goes live
+
+Two private artifacts exist purely for staging, in `.claude/preview-links.json`:
+**site preview** `https://claude.ai/artifact/CB5hqTL4fd2thpgkBe4Aq6` and **game preview**
+`https://claude.ai/artifact/3gWmXrXbX7kkrQmAJcw8nS`. They link to each other, not to the
+real pair. Nothing but `make-preview.py` reads that file, and `status.py` does not track
+them.
+
+1. Do the work on a git branch (`preview/<topic>`), never on `main` — a commit on `main`
+   is what reaches airhockeymusic.com.
+2. `python3 .claude/sync-all.py`, then `python3 .claude/make-preview.py`, which copies both
+   builds into `.claude/preview/`, swaps in the preview URLs and retitles them "… preview".
+3. Publish `.claude/preview/site-preview.html` and `game-preview.html` with `url` set to the
+   preview URLs. **Do not** publish the real artifacts or `--mark-published` yet — the
+   banner will say STALE for the real pair while a preview is waiting, which is correct.
+4. Once Sebastian approves: merge to `main`, then the normal loop above.
+
+To screenshot a build there is `.claude/test/shotpage.js` (`osascript -l JavaScript shotpage.js page.html outdir W H top`). Two traps: WebKit's
+snapshot draws **nothing** under the full-screen `.fx-soft` backdrop-filter (every section
+comes back blank, on the live build too), and scrolling before a snapshot does not repaint —
+so hide `.fx-soft`, cap `.hero` min-height, and shoot one tall viewport, then crop.
+
 ## The artifact is sometimes the newer copy
 
 Sebastian also edits the **published artifacts directly** and then asks for those

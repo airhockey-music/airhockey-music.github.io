@@ -863,6 +863,122 @@
   }
   .icon { width: 1em; height: 1em; display: inline-block;
           vertical-align: -0.125em; flex: none; }
+
+  /* ===========================================================
+     BANDCAMP LOOK — the palette of airhockeyband.bandcamp.com laid over
+     everything above: a black-and-white night photo of flowers, the grey
+     #C4C4C4 panel, purple #741F9E text, red #C11E1A links and a black nav bar,
+     with the lilac #F3CBFB page colour kept as the one soft accent. This is
+     an override block on purpose, so the pastel scheme is one deletion away.
+  ============================================================ */
+  :root {
+    --bc-grey:    #c4c4c4;
+    --bc-grey-2:  #b8b8b8;
+    --bc-purple:  #741f9e;
+    --bc-red:     #c11e1a;
+    --bc-lilac:   #f3cbfb;
+    --bc-black:   #0b0b0b;
+    --bc-photo:   url("photos/night-flowers.jpg");
+
+    --lav: var(--bc-grey);  --lav-bg: var(--bc-grey);  --paper: #d0d0d0;
+    --mint: var(--bc-lilac);  --mint-2: var(--bc-red);
+    --pink: var(--bc-lilac);  --pink-2: var(--bc-red);
+    --yellow: var(--bc-lilac);  --sky: #dadada;
+
+    --ink:      var(--bc-purple);
+    --ink-body: #561676;
+    --ink-soft: rgba(84, 20, 116, 0.82);
+    --ink-faint:rgba(46, 12, 66, 0.66);
+    --line:     rgba(0, 0, 0, 0.14);
+  }
+  body { background: var(--bc-grey); }
+  ::selection { background: var(--bc-red); color: #fff; }
+
+  .fx-vignette { background: radial-gradient(125% 105% at 50% 42%, transparent 58%, rgba(0, 0, 0, 0.22)); }
+  .fx-scan {
+    background: repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.09) 0px, rgba(0, 0, 0, 0.09) 1px, transparent 1px, transparent 3px);
+  }
+  .fx-hud {
+    color: rgba(243, 203, 251, 0.9);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.7), 1.2px 0 0 rgba(193, 30, 26, 0.5), -1.2px 0 0 rgba(0, 200, 200, 0.35);
+  }
+
+  .section-title, .latest-info h2 { text-shadow: 3px 3px 0 var(--bc-lilac), -2px 2px 0 rgba(0, 0, 0, 0.16); }
+
+  .btn-primary { background: var(--bc-red); color: #fff; box-shadow: 3px 3px 0 var(--bc-purple); }
+  .btn-primary:hover { background: var(--bc-purple); color: #fff; box-shadow: 3px 3px 0 var(--bc-red); }
+
+  /* nav: transparent over the photo, the black Bandcamp bar once you scroll */
+  header.nav.scrolled {
+    background: rgba(11, 11, 11, 0.86);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .logo img { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6)); }
+  .nav-links a { color: rgba(243, 203, 251, 0.85); }
+  .nav-links a:hover { color: #fff; }
+  .nav-links a.nav-play { color: #fff; background: var(--bc-red); box-shadow: 2px 2px 0 var(--bc-lilac); }
+  .nav-links a.nav-play:hover { color: var(--bc-purple); background: var(--bc-lilac); box-shadow: 2px 2px 0 var(--bc-red); }
+  .hamburger span { background: var(--bc-lilac); }
+  .mobile-menu { background: rgba(11, 11, 11, 0.96); }
+  .mobile-menu a { color: var(--bc-lilac); }
+  .mobile-menu a:hover { color: #fff; }
+
+  /* hero: the night-flowers photo, darkened just enough for the grey wordmark */
+  .hero {
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.18) 45%, rgba(0, 0, 0, 0.62)),
+      var(--bc-photo) center 62% / cover no-repeat,
+      var(--bc-black);
+  }
+  .hero-glow { background: radial-gradient(circle, rgba(255, 255, 255, 0.10), rgba(243, 203, 251, 0.06) 45%, transparent 66%); }
+  .hero-logo { filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35)) drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55)); }
+  .hero .tagline { color: rgba(255, 255, 255, 0.78); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+  .hero .btn-ghost { border-color: rgba(243, 203, 251, 0.7); color: var(--bc-lilac); }
+  .hero .btn-ghost:hover { border-color: #fff; color: #fff; background: rgba(255, 255, 255, 0.10); }
+  .scroll-hint { color: rgba(255, 255, 255, 0.6); }
+  .scroll-hint .line { background: linear-gradient(var(--bc-lilac), transparent); }
+
+  /* the content sections are the flat grey Bandcamp panel */
+  .latest, .about, .shows, .store { background: var(--bc-grey); }
+  .discography, .about { background: var(--bc-grey-2); }
+  .latest-art { background: var(--bc-grey-2); }
+  .release-overlay { background: rgba(196, 196, 196, 0.45); }
+  .release-overlay .listen { color: #fff; box-shadow: 2px 2px 0 var(--bc-purple); }
+  .release-overlay .listen:hover { color: var(--bc-purple); background: var(--bc-lilac); }
+  .release-art .art-title, .product-art i, .about-photo .caption { color: rgba(0, 0, 0, 0.45); }
+  .stream-btn { background: rgba(255, 255, 255, 0.35); }
+  .stream-btn:hover { color: var(--bc-purple); box-shadow: 2px 2px 0 var(--bc-red); }
+  .member-photo, .release-art, .product-art { box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--line); }
+  .release:hover .release-art { box-shadow: 8px 14px 0 var(--bc-lilac), 0 0 0 1px var(--line); }
+  .show { background: rgba(255, 255, 255, 0.32); }
+  .show:hover { box-shadow: 5px 7px 0 var(--bc-purple); }
+  .signup-form input[type="email"] { background: rgba(255, 255, 255, 0.55); }
+  .shows-follow .socials a:hover, .socials a:hover { color: #fff; box-shadow: 2px 3px 0 var(--bc-purple); }
+
+  /* pastel placeholder tiles, now greys with a lilac edge */
+  .c-mint, .c-sky, .c-lav     { background: linear-gradient(150deg, #e4e4e4, #d2d2d2 55%, #f3cbfb); }
+  .c-pink, .c-dream, .c-peach { background: linear-gradient(150deg, #f3cbfb, #e2d4e6 50%, #d4d4d4); }
+  .c-yellow, .c-mintpink      { background: linear-gradient(150deg, #ececec, #d8d8d8 50%, #e9cdef); }
+
+  /* footer: back onto the photo, as dark as the Bandcamp page edges */
+  footer {
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.9)),
+      var(--bc-photo) center 70% / cover no-repeat,
+      var(--bc-black);
+    border-top-color: rgba(0, 0, 0, 0.4);
+  }
+  .skyline g { fill: #c4c4c4; }
+  /* the filled icons (apple, bandcamp) defaulted to black, invisible on the dark footer;
+     inherited, so the stroked icons' own fill="none" still wins */
+  svg.icon { fill: currentColor; }
+  .footer-logo img { filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6)); }
+  .footer-tag { color: rgba(255, 255, 255, 0.6); }
+  footer .socials a { color: var(--bc-lilac); border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06); }
+  footer .socials a:hover { color: #fff; background: var(--bc-red); box-shadow: 2px 3px 0 var(--bc-lilac); }
+  .footer-meta { color: rgba(255, 255, 255, 0.58); }
+  .footer-meta .loc { color: var(--bc-lilac); }
 </style>
 
 
@@ -873,7 +989,7 @@
 <header class="nav" id="nav">
   <div class="nav-inner">
     <a href="#top" class="logo" aria-label="airhockey — home">
-      <img src="airhockey-logo-t.png" alt="airhockey" />
+      <img src="airhockey-logo-grey.png" alt="airhockey" />
     </a>
     <div class="nav-right">
       <nav>
@@ -906,7 +1022,7 @@
   <div class="hero-glow"></div>
   <div class="particles" id="particles" aria-hidden="true"></div>
   <div class="hero-content">
-    <img class="hero-logo" src="airhockey-logo-t.png" alt="airhockey" />
+    <img class="hero-logo" src="airhockey-logo-grey.png" alt="airhockey" />
     <p class="tagline">shoegaze / dream-pop / miami, fl</p>
     <div class="hero-ctas">
       <a class="btn btn-primary" href="https://airhockeyband.bandcamp.com" target="_blank" rel="noopener">
@@ -1271,7 +1387,7 @@
 
   <div class="footer-inner wrap">
     <a href="#top" class="footer-logo" aria-label="airhockey — home">
-      <img src="airhockey-logo-t.png" alt="airhockey" />
+      <img src="airhockey-logo-grey.png" alt="airhockey" />
     </a>
     <p class="footer-tag">shoegaze / dream-pop</p>
 
@@ -1347,11 +1463,11 @@
     els.forEach(function (el) { io.observe(el); });
   })();
 
-  /* ---------- Hero shooting stars (pastel, glowing) ---------- */
+  /* ---------- Hero shooting stars (white and lilac, glowing) ---------- */
   (function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const host = document.getElementById('particles');
-    const colors = ['#d4ffea', '#eecbff', '#feffa3', '#cfe4ff'];
+    const colors = ['#ffffff', '#f3cbfb', '#d8d8d8', '#ffffff'];
     const N = 16;
     for (let i = 0; i < N; i++) {
       const s = document.createElement('span');
