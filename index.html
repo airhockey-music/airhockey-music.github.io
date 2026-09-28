@@ -877,7 +877,9 @@
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.7), 1.2px 0 0 rgba(193, 30, 26, 0.5), -1.2px 0 0 rgba(0, 200, 200, 0.35);
   }
 
-  .section-title, .latest-info h2 { color: #111; text-shadow: 3px 3px 0 var(--bc-purple), -2px 2px 0 rgba(0, 0, 0, 0.16); }
+  /* a light-grey offset, lighter than the panel so it lifts the black type rather than
+     blurring into it -- the purple offset read as a smear under black */
+  .section-title, .latest-info h2 { color: #111; text-shadow: 3px 3px 0 #ececec, -2px 2px 0 rgba(0, 0, 0, 0.16); }
 
   .btn-primary { background: var(--bc-red); color: #fff; box-shadow: 3px 3px 0 var(--bc-purple); }
   .btn-primary:hover { background: var(--bc-purple); color: #fff; box-shadow: 3px 3px 0 var(--bc-red); }
