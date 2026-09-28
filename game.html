@@ -276,7 +276,7 @@
   .atk-btn:active { background: var(--pink-2); }
 
   /* ===== VHS / shoegaze wash — layered on top of the game ===== */
-  .fx-soft, .fx-vignette, .fx-grain, .fx-scan, .fx-track, .fx-glitch, .fx-hud { position: fixed; pointer-events: none; }
+  .fx-soft, .fx-vignette, .fx-grain, .fx-scan, .fx-track, .fx-hud { position: fixed; pointer-events: none; }
   .fx-soft {
     inset: 0; z-index: 9996;
     -webkit-backdrop-filter: blur(0.6px) saturate(1.2) contrast(1.05);
@@ -303,22 +303,6 @@
     filter: blur(2px); mix-blend-mode: overlay; opacity: 0.7; animation: track 7s linear infinite;
   }
   @keyframes track { 0%{transform:translateY(-140px)} 100%{transform:translateY(104vh)} }
-  .fx-glitch {
-    inset: 0; z-index: 10000; opacity: 0;
-    background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(0,255,224,0.30) 4px 6px, transparent 6px 10px, rgba(255,44,140,0.30) 10px 12px);
-    mix-blend-mode: screen; animation: vhsglitch 4.6s steps(1,end) infinite;
-  }
-  @keyframes vhsglitch {
-    0%,9%{opacity:0;transform:translate(0,0)}
-    9.4%{opacity:1;transform:translate(-14px,2px) skewX(-1.1deg)} 9.9%{opacity:.28;transform:translate(12px,-3px) skewX(1.3deg)}
-    10.4%{opacity:.9;transform:translate(-7px,1px)} 10.9%{opacity:0;transform:translate(0,0)}
-    42%{opacity:0;transform:translate(0,0)}
-    42.4%{opacity:.95;transform:translate(11px,-3px) skewX(1.1deg)} 42.9%{opacity:.22;transform:translate(-13px,2px)}
-    43.4%{opacity:.85;transform:translate(6px,0) skewX(-0.9deg)} 43.9%{opacity:0;transform:translate(0,0)}
-    75%{opacity:0;transform:translate(0,0)}
-    75.4%{opacity:1;transform:translate(-15px,3px) skewX(-1.3deg)} 75.9%{opacity:.25;transform:translate(10px,-2px)}
-    76.4%{opacity:.7;transform:translate(-5px,1px)} 76.9%{opacity:0;transform:translate(0,0)} 100%{opacity:0}
-  }
   .fx-hud {
     top: 14px; right: 16px; z-index: 10002;
     display: flex; align-items: center; gap: 0.5em;
@@ -329,8 +313,8 @@
   .fx-hud .rec { width: 8px; height: 8px; border-radius: 50%; background: #ff3b6b; box-shadow: 0 0 9px #ff3b6b; animation: recblink 1.1s steps(1) infinite; }
   @keyframes recblink { 0%,50%{opacity:1} 50.01%,100%{opacity:0.12} }
   @media (prefers-reduced-motion: reduce) {
-    .fx-grain, .fx-glitch, .fx-track, .fx-hud .rec { animation: none; }
-    .fx-glitch, .fx-track { display: none; }
+    .fx-grain, .fx-track, .fx-hud .rec { animation: none; }
+    .fx-track { display: none; }
   }
   @media (max-width: 600px) { .fx-hud { top: auto; bottom: 10px; right: 10px; } }
 </style>
@@ -4465,6 +4449,5 @@
 <div class="fx-grain" aria-hidden="true"></div>
 <div class="fx-scan" aria-hidden="true"></div>
 <div class="fx-track" aria-hidden="true"></div>
-<div class="fx-glitch" aria-hidden="true"></div>
 </body>
 </html>
