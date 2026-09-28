@@ -852,9 +852,11 @@
     --bc-photo:   url("photos/night-flowers.jpg");
 
     --lav: var(--bc-grey);  --lav-bg: var(--bc-grey);  --paper: #d0d0d0;
-    --mint: var(--bc-lilac);  --mint-2: var(--bc-red);
-    --pink: var(--bc-lilac);  --pink-2: var(--bc-red);
-    --yellow: var(--bc-lilac);  --sky: #dadada;
+    /* no light-pink fills: offset blocks and hover fills are purple, tiles are grey;
+       lilac survives only as text on the dark nav and footer */
+    --mint: #2b2b2b;  --mint-2: var(--bc-red);
+    --pink: var(--bc-purple);  --pink-2: var(--bc-red);
+    --yellow: var(--bc-purple);  --sky: #dadada;
 
     --ink:      var(--bc-purple);
     --ink-body: #561676;
@@ -875,7 +877,7 @@
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.7), 1.2px 0 0 rgba(193, 30, 26, 0.5), -1.2px 0 0 rgba(0, 200, 200, 0.35);
   }
 
-  .section-title, .latest-info h2 { text-shadow: 3px 3px 0 var(--bc-lilac), -2px 2px 0 rgba(0, 0, 0, 0.16); }
+  .section-title, .latest-info h2 { color: #111; text-shadow: 3px 3px 0 var(--bc-purple), -2px 2px 0 rgba(0, 0, 0, 0.16); }
 
   .btn-primary { background: var(--bc-red); color: #fff; box-shadow: 3px 3px 0 var(--bc-purple); }
   .btn-primary:hover { background: var(--bc-purple); color: #fff; box-shadow: 3px 3px 0 var(--bc-red); }
@@ -889,7 +891,7 @@
   .nav-links a { color: rgba(243, 203, 251, 0.85); }
   .nav-links a:hover { color: #fff; }
   .nav-links a.nav-play { color: #fff; background: var(--bc-red); box-shadow: 2px 2px 0 var(--bc-lilac); }
-  .nav-links a.nav-play:hover { color: var(--bc-purple); background: var(--bc-lilac); box-shadow: 2px 2px 0 var(--bc-red); }
+  .nav-links a.nav-play:hover { color: #fff; background: var(--bc-purple); box-shadow: 2px 2px 0 var(--bc-red); }
   .hamburger span { background: var(--bc-lilac); }
   .mobile-menu { background: rgba(11, 11, 11, 0.96); }
   .mobile-menu a { color: var(--bc-lilac); }
@@ -916,21 +918,26 @@
   .latest-art { background: var(--bc-grey-2); }
   .release-overlay { background: rgba(196, 196, 196, 0.45); }
   .release-overlay .listen { color: #fff; box-shadow: 2px 2px 0 var(--bc-purple); }
-  .release-overlay .listen:hover { color: var(--bc-purple); background: var(--bc-lilac); }
+  .release-overlay .listen:hover { color: #fff; background: var(--bc-purple); box-shadow: 2px 2px 0 var(--bc-red); }
   .release-art .art-title, .product-art i, .about-photo .caption { color: rgba(0, 0, 0, 0.45); }
   .stream-btn { background: rgba(255, 255, 255, 0.35); }
-  .stream-btn:hover { color: var(--bc-purple); box-shadow: 2px 2px 0 var(--bc-red); }
+  .stream-btn:hover { color: #fff; background: var(--bc-purple); box-shadow: 2px 2px 0 var(--bc-red); }
+  /* the show date sits on dark grey now, so its three lines go light */
+  .show-date { border-color: transparent; }
+  .show-date .dow { color: rgba(255, 255, 255, 0.62); }
+  .show-date .day { color: #fff; }
+  .show-date .mon { color: #ff6b66; }
   .member-photo, .release-art, .product-art { box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--line); }
-  .release:hover .release-art { box-shadow: 8px 14px 0 var(--bc-lilac), 0 0 0 1px var(--line); }
+  .release:hover .release-art { box-shadow: 8px 14px 0 var(--bc-purple), 0 0 0 1px var(--line); }
   .show { background: rgba(255, 255, 255, 0.32); }
   .show:hover { box-shadow: 5px 7px 0 var(--bc-purple); }
   .signup-form input[type="email"] { background: rgba(255, 255, 255, 0.55); }
   .shows-follow .socials a:hover, .socials a:hover { color: #fff; box-shadow: 2px 3px 0 var(--bc-purple); }
 
-  /* pastel placeholder tiles, now greys with a lilac edge */
-  .c-mint, .c-sky, .c-lav     { background: linear-gradient(150deg, #e4e4e4, #d2d2d2 55%, #f3cbfb); }
-  .c-pink, .c-dream, .c-peach { background: linear-gradient(150deg, #f3cbfb, #e2d4e6 50%, #d4d4d4); }
-  .c-yellow, .c-mintpink      { background: linear-gradient(150deg, #ececec, #d8d8d8 50%, #e9cdef); }
+  /* pastel placeholder tiles, now plain greys */
+  .c-mint, .c-sky, .c-lav     { background: linear-gradient(150deg, #d6d6d6, #b4b4b4); }
+  .c-pink, .c-dream, .c-peach { background: linear-gradient(150deg, #cfcfcf, #a9a9a9); }
+  .c-yellow, .c-mintpink      { background: linear-gradient(150deg, #dadada, #bababa); }
 
   /* footer: back onto the photo, as dark as the Bandcamp page edges */
   footer {
