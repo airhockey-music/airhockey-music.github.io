@@ -803,6 +803,33 @@
   /* one link out to the YouTube playlist that holds every song and video */
   .disco-cta { text-align: center; margin-top: 3.5rem; }
   .disco-cta .btn { border-radius: 0; font-size: 1.1rem; padding: 1.1em 2.6em; gap: 0.75em; }
+  /* music videos: 16:9 thumbnails saved locally in videos/ (the artifact CSP blocks
+     hotlinking i.ytimg.com), each opening its video on YouTube */
+  .videos { margin-top: clamp(4rem, 9vw, 6rem); }
+  .videos .eyebrow { margin-bottom: 0; }
+  .video-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: clamp(1rem, 2.5vw, 1.8rem); margin-top: 1.6rem;
+  }
+  .video-art {
+    aspect-ratio: 16 / 9; position: relative; overflow: hidden;
+    box-shadow: 0 14px 30px -18px rgba(90, 70, 140, 0.5), 0 0 0 1px var(--line);
+    transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+  }
+  .video-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video:hover .video-art {
+    transform: translateY(-6px) rotate(-1deg);
+    box-shadow: 8px 14px 0 var(--pink), 0 0 0 1px var(--line);
+  }
+  .video-play {
+    position: absolute; inset: 0; margin: auto;
+    width: 2.8rem; height: 2.8rem; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--mint-2); color: var(--ink); box-shadow: 3px 3px 0 var(--pink-2);
+    transition: background 0.3s var(--ease);
+  }
+  .video:hover .video-play { background: var(--yellow); }
+  @media (max-width: 900px) { .video-grid { grid-template-columns: repeat(2, 1fr); } }
 
   /* ---------- Footer ---------- */
   footer {
@@ -1092,6 +1119,40 @@
         <div class="release-info"><div class="title">you don't mind</div><div class="sub">single · jan 2019</div></div>
       </a>
 
+    </div>
+
+    <div class="videos">
+      <p class="eyebrow reveal">music videos</p>
+      <div class="video-grid">
+      <a class="video reveal" href="https://www.youtube.com/watch?v=EY_bE8rauF8" target="_blank" rel="noopener" aria-label="Close, music video, January 2023">
+        <div class="video-art">
+          <img src="videos/close.jpg" alt="Close music video" loading="lazy" />
+          <span class="video-play"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>
+        </div>
+        <div class="release-info"><div class="title">Close</div><div class="sub">video · jan 2023</div></div>
+      </a>
+      <a class="video reveal" data-delay="1" href="https://www.youtube.com/watch?v=UEXb4awsHvQ" target="_blank" rel="noopener" aria-label="Grapefruit, music video, September 2022">
+        <div class="video-art">
+          <img src="videos/grapefruit.jpg" alt="Grapefruit music video" loading="lazy" />
+          <span class="video-play"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>
+        </div>
+        <div class="release-info"><div class="title">Grapefruit</div><div class="sub">video · sep 2022</div></div>
+      </a>
+      <a class="video reveal" data-delay="2" href="https://www.youtube.com/watch?v=PZ3EpijC_fE" target="_blank" rel="noopener" aria-label="Try, music video, August 2020">
+        <div class="video-art">
+          <img src="videos/try.jpg" alt="Try music video" loading="lazy" />
+          <span class="video-play"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>
+        </div>
+        <div class="release-info"><div class="title">Try</div><div class="sub">video · aug 2020</div></div>
+      </a>
+      <a class="video reveal" data-delay="3" href="https://www.youtube.com/watch?v=JNv93ygAtXE" target="_blank" rel="noopener" aria-label="Just Not Fair, music video, April 2020">
+        <div class="video-art">
+          <img src="videos/just-not-fair.jpg" alt="Just Not Fair music video" loading="lazy" />
+          <span class="video-play"><svg class="icon" viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></span>
+        </div>
+        <div class="release-info"><div class="title">Just Not Fair</div><div class="sub">video · apr 2020</div></div>
+      </a>
+      </div>
     </div>
 
     <div class="disco-cta reveal">
