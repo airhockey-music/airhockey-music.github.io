@@ -426,7 +426,7 @@ with nothing to catch it.
   the site carries only the loop — because none of it appears in the fingerprints and a
   silent build otherwise looks perfectly healthy.
 
-## Upcoming shows, and the weekly check
+## Upcoming shows, new releases, and the weekly check
 
 The Shows section lists gigs between `<!-- SHOWS:BEGIN` and `<!-- SHOWS:END -->` in
 `index.html`. **Keep those markers**: a scheduled task rewrites exactly that block and
@@ -442,10 +442,22 @@ and is server-rendered, so a plain fetch reads it.
 **Instagram cannot be scanned and it is not worth retrying.** Tested 2026-09-07:
 `https://www.instagram.com/airhockeyband` returns HTTP 200 and 620KB of JavaScript shell
 with **no `og:title`, no `og:description` and no captions**. Everything is behind auth.
-Bandcamp has no shows section either. Linktree is the only readable source, and if a
-flyer image cannot be found the task is told to say so rather than substitute anything.
-Chat attachments never reach the filesystem, so a flyer has to be placed in the project
-folder by hand.
+Bandcamp has no shows section either, so Linktree is the only readable source for shows.
+**The site shows no flyers**, on purpose: Sebastian decided on 2026-10-13 to keep the
+listings text-only and consistent. With no shows, the block holds a single
+`<p class="shows-empty">` line, and unknown doors, cover or age become `more info tbd`
+rather than a guess. Chat attachments *do* reach the disk now, under the session's
+`images/` folder.
+
+**The same task also checks Bandcamp for new releases** (added 2026-10-13). It diffs the
+`/track/` and `/album/` slugs on `/music` against the discography grid. For each new one it
+takes the date off the release's own page, fetches the art from `og:image` with `_5`
+swapped for `_0`, and adds a tile newest-first. It re-cycles every tile's `data-delay`
+0-3, and re-features the release in the latest-release block if it is now the newest.
+
+**After any live change, the task merges `main` into `preview/bandcamp-look`** and
+republishes the preview site. The redesign then always carries the live shows and
+releases, but it never reaches `main`. The task's own SKILL.md holds the step-by-step.
 
 ## The site's live data
 
@@ -468,8 +480,8 @@ elsewhere and go stale:
   2024), Something (23 Feb 2024), Always Late (14 Apr 2023), Close (20 Jan 2023),
   Grapefruit (1 Apr 2022), Walkthrough EP (17 Jul 2020), Not Enough (26 Jun 2020),
   Try (5 Jun 2020), Just Not Fair (17 Apr 2020), The Signs (4 Oct 2019), hidden by
-  the sun (7 Jun 2019), you don't mind (23 Jan 2019). Newest as of 2026-09-06 is
-  **nice day (4 Sep 2026)**, which is 17 with the rest. The grid is newest-first and
+  the sun (7 Jun 2019), you don't mind (23 Jan 2019). Since then: **nice day
+  (4 Sep 2026)**, and newest as of 2026-10-13 **melt (2 Oct 2026)** — 18 in all. The grid is newest-first and
   the "latest release" block at the top of the page has to show whatever sits first in
   it — adding a release and forgetting to re-feature it looks fine until someone reads
   the date, so `page.py` asserts the two match.
