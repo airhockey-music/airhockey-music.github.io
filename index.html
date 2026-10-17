@@ -778,7 +778,8 @@
   .store-head { text-align: center; margin-bottom: 3.5rem; }
   .store-head p { color: var(--ink-body); margin-top: 1rem; font-size: 1.05rem; }
   .products {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* two rows of four: the four logo-tee styles, then everything else */
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: clamp(1rem, 3vw, 2rem); margin-bottom: 3rem;
   }
   .product { text-align: center; display: block; }
@@ -1274,30 +1275,45 @@
     </div>
 
     <div class="products">
-      <a class="product reveal" href="https://airhockey.bigcartel.com/product/the-fanny-pack" target="_blank" rel="noopener">
-        <div class="product-art film c-mint"><img class="shot" src="merch/the-fanny-pack.png" alt="the fanny pack" loading="lazy" /></div>
-        <div class="pname">the fanny pack</div>
-        <div class="pprice">$30</div>
+      <a class="product reveal" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-lav"><img class="shot" src="merch/spaced-tee.png" alt="spaced tee" loading="lazy" /></div>
+        <div class="pname">spaced tee</div>
+        <div class="pprice">from $30</div>
       </a>
       <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
         <div class="product-art film c-pink"><img class="shot" src="merch/box-logo-tee.png" alt="box logo tee" loading="lazy" /></div>
         <div class="pname">box logo tee</div>
-        <div class="pprice">$28</div>
+        <div class="pprice">from $30</div>
       </a>
-      <a class="product reveal" data-delay="2" href="https://airhockey.bigcartel.com/product/walkthrough-tee-unisex" target="_blank" rel="noopener">
-        <div class="product-art film c-yellow"><img class="shot" src="merch/walkthrough-tee.png" alt="walkthrough tee" loading="lazy" /></div>
-        <div class="pname">walkthrough tee</div>
-        <div class="pprice">$28</div>
-      </a>
-      <a class="product reveal" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
+      <a class="product reveal" data-delay="2" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
         <div class="product-art film c-sky"><img class="shot" src="merch/simple-tee.png" alt="simple tee" loading="lazy" /></div>
         <div class="pname">simple tee</div>
+        <div class="pprice">from $30</div>
+      </a>
+      <a class="product reveal" data-delay="3" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-mintpink"><img class="shot" src="merch/show-logo-tee.png" alt="show logo tee" loading="lazy" /></div>
+        <div class="pname">show logo tee</div>
+        <div class="pprice">from $30</div>
+      </a>
+      <a class="product reveal" href="https://airhockey.bigcartel.com/product/walkthrough-tee-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-yellow"><img class="shot" src="merch/walkthrough-tee.png" alt="walkthrough tee" loading="lazy" /></div>
+        <div class="pname">walkthrough tee</div>
+        <div class="pprice">from $30</div>
+      </a>
+      <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/hoodie-unisex" target="_blank" rel="noopener">
+        <div class="product-art film c-dream"><img class="shot" src="merch/hoodie.png" alt="hoodie" loading="lazy" /></div>
+        <div class="pname">hoodie</div>
+        <div class="pprice">from $55</div>
+      </a>
+      <a class="product reveal" data-delay="2" href="https://airhockey.bigcartel.com/product/washed-cap" target="_blank" rel="noopener">
+        <div class="product-art film c-peach"><img class="shot" src="merch/washed-cap.png" alt="washed cap" loading="lazy" /></div>
+        <div class="pname">washed cap</div>
         <div class="pprice">$28</div>
       </a>
-      <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
-        <div class="product-art film c-lav"><img class="shot" src="merch/spaced-tee.png" alt="spaced tee" loading="lazy" /></div>
-        <div class="pname">spaced tee</div>
-        <div class="pprice">$28</div>
+      <a class="product reveal" data-delay="3" href="https://airhockey.bigcartel.com/product/the-fanny-pack" target="_blank" rel="noopener">
+        <div class="product-art film c-mint"><img class="shot" src="merch/the-fanny-pack.png" alt="the fanny pack" loading="lazy" /></div>
+        <div class="pname">the fanny pack</div>
+        <div class="pprice">$30</div>
       </a>
     </div>
 
