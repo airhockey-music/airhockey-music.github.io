@@ -1300,10 +1300,15 @@
     p: '#332b52', // jeans
     b: '#171225', // shoes
   };
-  // Mike (guitar/synth) — short hair, opaque sunglasses, own geometry (shares Sebastian's torso/legs)
+  // Mike (guitar/synth) — dark cap, full beard, own head and shoulders (shares Sebastian's arms/legs)
   const MIKE_PALETTE = {
     o: '#171225', H: '#2b2b2b', J: '#454545', f: '#e3ab7d', d: '#c68f5c',
     m: '#e3ab7d', w: '#cfe4ff', y: '#aac3e6', a: '#feffa3', p: '#332b52', b: '#171225',
+    C: '#2a2740', // cap
+    K: '#4a4468', // cap panel highlight
+    B: '#4a3428', // beard
+    q: '#a0604a', // lip through the beard
+    e: '#171225', // eye
   };
 
   // build a fixed-width row from alternating [char, count] pairs — safer than hand-counted strings
@@ -1395,108 +1400,139 @@
     side: [[...SIDE_HEAD,  ...SIDE_TORSO, ...SIDE_LEGS_A], [...SIDE_HEAD, ...SIDE_TORSO, ...SIDE_LEGS_B]],
   };
 
-  // Mike — short hair, opaque sunglasses band (no visible eyes), shares Sebastian's torso/legs via MIKE_PALETTE
+  // Mike — drawn from reference photos (2026-10-14, first for the 8-bit tee): a dark
+  // cap with a lighter panel, a full beard and no sunglasses. His hair is short, so
+  // unlike Sebastian nothing falls on his shoulders -- he gets his own top torso row.
   const MIKE_HEAD_FRONT = [
-    seg('.', 2, 'H', 12, '.', 2),
-    seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
-    seg('.', 2, 'H', 2, 'f', 8, 'H', 2, '.', 2),
-    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
-    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
-    seg('.', 4, 'o', 3, 'f', 2, 'o', 3, '.', 4),
-    seg('.', 4, 'f', 8, '.', 4),
-    seg('.', 4, 'f', 8, '.', 4),
-    seg('.', 4, 'f', 8, '.', 4),
-    seg('.', 5, 'f', 6, '.', 5),
-    seg('.', 3, 'w', 10, '.', 3),
+    seg('.', 2, 'C', 12, '.', 2),
+    seg('.', 1, 'C', 2, 'K', 10, 'C', 2, '.', 1),
+    seg('.', 1, 'C', 14, '.', 1),
+    seg('.', 2, 'B', 1, 'f', 10, 'B', 1, '.', 2),
+    seg('.', 2, 'B', 1, 'f', 1, 'o', 2, 'f', 4, 'o', 2, 'f', 1, 'B', 1, '.', 2),
+    seg('.', 2, 'B', 1, 'f', 2, 'e', 1, 'f', 4, 'e', 1, 'f', 2, 'B', 1, '.', 2),
+    seg('.', 2, 'B', 1, 'f', 4, 'd', 2, 'f', 4, 'B', 1, '.', 2),
+    seg('.', 2, 'B', 2, 'f', 1, 'B', 6, 'f', 1, 'B', 2, '.', 2),
+    seg('.', 2, 'B', 5, 'q', 2, 'B', 5, '.', 2),
+    seg('.', 3, 'B', 10, '.', 3),
+    seg('.', 3, 'w', 1, 'B', 8, 'w', 1, '.', 3),
   ];
+  // from behind: the snapback strap in the panel colour (his hair is too close to the
+  // cap's own shade to show through it), and the beard edging the jaw
   const MIKE_HEAD_BACK = [
+    seg('.', 2, 'C', 12, '.', 2),
+    seg('.', 1, 'C', 14, '.', 1),
+    seg('.', 1, 'C', 14, '.', 1),
+    seg('.', 2, 'C', 4, 'K', 4, 'C', 4, '.', 2),
     seg('.', 2, 'H', 12, '.', 2),
     seg('.', 2, 'H', 2, 'J', 8, 'H', 2, '.', 2),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 3, 'H', 10, '.', 3),
-    seg('.', 4, 'H', 8, '.', 4),
-    seg('.', 5, 'f', 6, '.', 5),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'H', 12, '.', 2),
+    seg('.', 2, 'B', 1, 'H', 10, 'B', 1, '.', 2),
+    seg('.', 3, 'B', 1, 'f', 8, 'B', 1, '.', 3),
     seg('.', 3, 'w', 10, '.', 3),
   ];
+  // facing right: brim forward, sideburn running into the beard
   const MIKE_SIDE_HEAD = [
-    seg('.', 4, 'H', 8, '.', 4),
-    seg('.', 4, 'H', 2, 'J', 4, 'H', 2, '.', 4),
-    seg('.', 3, 'H', 3, 'f', 7, '.', 3),
-    seg('.', 3, 'H', 2, 'f', 3, 'o', 3, '.', 5),
-    seg('.', 3, 'H', 1, 'f', 4, 'o', 3, '.', 5),
-    seg('.', 3, 'H', 2, 'f', 3, 'o', 3, '.', 5),
+    seg('.', 4, 'C', 8, '.', 4),
+    seg('.', 3, 'C', 1, 'K', 7, 'C', 1, '.', 4),
+    seg('.', 3, 'C', 12, '.', 1),
     seg('.', 3, 'H', 2, 'f', 7, '.', 4),
-    seg('.', 3, 'H', 2, 'f', 6, '.', 5),
-    seg('.', 3, 'H', 2, 'f', 6, '.', 5),
-    seg('.', 2, 'H', 3, 'f', 6, '.', 5),
-    seg('H', 3, 'w', 8, '.', 5),
+    seg('.', 3, 'H', 1, 'B', 1, 'f', 3, 'o', 2, 'f', 1, '.', 5),
+    seg('.', 3, 'H', 1, 'B', 1, 'f', 4, 'e', 1, 'f', 1, '.', 5),
+    seg('.', 3, 'B', 2, 'f', 6, 'd', 1, '.', 4),
+    seg('.', 3, 'B', 3, 'f', 1, 'B', 4, '.', 5),
+    seg('.', 3, 'B', 5, 'q', 1, 'B', 2, '.', 5),
+    seg('.', 3, 'B', 8, '.', 5),
+    seg('.', 3, 'w', 8, '.', 5),
   ];
+  const MIKE_TORSO = [seg('.', 2, 'w', 12, '.', 2), ...TORSO.slice(1)];
+  const MIKE_SIDE_TORSO = [seg('.', 3, 'w', 7, '.', 6), ...SIDE_TORSO.slice(1)];
   const MIKE_SPRITES = {
-    down: [...MIKE_HEAD_FRONT, ...TORSO, ...LEGS_A],
-    up:   [...MIKE_HEAD_BACK,  ...TORSO, ...LEGS_A],
-    side: [...MIKE_SIDE_HEAD,  ...SIDE_TORSO, ...SIDE_LEGS_A],
+    down: [...MIKE_HEAD_FRONT, ...MIKE_TORSO, ...LEGS_A],
+    up:   [...MIKE_HEAD_BACK,  ...MIKE_TORSO, ...LEGS_A],
+    side: [...MIKE_SIDE_HEAD,  ...MIKE_SIDE_TORSO, ...SIDE_LEGS_A],
   };
 
-  // Mel (bass) — big curly hair, round glasses, patterned top; only needed standing for the finale scene
+  // Mel (bass) — drawn from reference photos (2026-10-14): near-black curls with
+  // lighter flecks, bangs swept to the centre, no glasses (those are Sebastian's).
   const MEL_PALETTE = {
-    o: '#171225', H: '#241a2e', J: '#3d2d42', f: '#e3ab7d', d: '#c68f5c',
-    l: '#a8c8e8', e: '#171225', w: '#5a7bc4', y: '#3f5a94', a: '#cfe4ff', p: '#9aa5c9', b: '#171225',
+    o: '#171225', H: '#1e1619', J: '#46343a', f: '#e3ab7d', d: '#c68f5c',
+    e: '#171225', // eye, top half
+    E: '#3a2a2e', // eye, lower half -- a 1x2 almond rather than a dot
+    q: '#8e3238', // lip corners
+    Q: '#b8484c', // lip
+    B: '#5a4038',
+    w: '#5a7bc4', y: '#3f5a94', a: '#cfe4ff', p: '#9aa5c9', b: '#171225',
   };
-  // Six pixels of face inside a lot of hair. An earlier pass ran it at four, tapering
-  // to two at the jaw, on the reasoning that an eight-wide face read as a heavier
-  // person than Mel is -- but the others ARE eight, narrowing to six, so four read as
-  // gaunt rather than slim. Six tapering to four keeps her two pixels narrower than
-  // Sebastian and Mike at every row, which is the difference the design wanted, while
-  // sitting in the same language as their heads. The volume of hair and the round
-  // glasses are what carry the rest.
+  // Her face is eight pixels tapering to six, the same as Sebastian's and Mike's.
+  // Two earlier passes ran it narrower (four, then six) on the reasoning that she is
+  // slimmer than they are; Sebastian found both too thin once the heads were drawn
+  // from photos, and the hair volume carries the difference on its own.
   const MEL_HEAD_FRONT = [
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 3, 'J', 2, 'H', 4, 'J', 2, 'H', 3, '.', 1),
-    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'o', 2, 'f', 2, 'o', 2, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'l', 1, 'e', 1, 'f', 2, 'e', 1, 'l', 1, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'o', 2, 'f', 2, 'o', 2, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 4, 'f', 6, 'H', 4, '.', 1),
-    seg('.', 1, 'H', 5, 'f', 4, 'H', 5, '.', 1),
-    seg('H', 6, 'f', 4, 'H', 6),
-    seg('H', 3, 'w', 10, 'H', 3),
+    seg('.', 2, 'J', 1, 'H', 1, 'J', 1, 'H', 2, 'J', 2, 'H', 2, 'J', 1, 'H', 1, 'J', 1, '.', 2),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 2, 'J', 1, 'H', 3, 'J', 1, 'H', 1, '.', 1),
+    seg('H', 1, 'J', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 4, 'H', 2, 'J', 1, 'H', 1),
+    seg('.', 1, 'H', 3, 'J', 1, 'H', 1, 'f', 6, 'H', 3, '.', 1),
+    seg('H', 2, 'J', 1, 'H', 1, 'f', 2, 'e', 1, 'f', 2, 'e', 1, 'f', 2, 'H', 1, 'J', 1, 'H', 2),
+    seg('J', 1, 'H', 3, 'f', 2, 'E', 1, 'f', 2, 'E', 1, 'f', 2, 'H', 3, 'J', 1),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 1, 'f', 4, 'd', 1, 'f', 3, 'H', 1, 'J', 1, 'H', 1, '.', 1),
+    seg('J', 1, 'H', 3, 'f', 2, 'q', 1, 'Q', 2, 'q', 1, 'f', 2, 'H', 3, 'J', 1),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 2, 'f', 6, 'H', 2, 'J', 1, 'H', 1, '.', 1),
+    seg('H', 1, 'J', 1, 'H', 4, 'f', 4, 'H', 4, 'J', 1, 'H', 1),
+    seg('J', 1, 'H', 2, 'w', 10, 'H', 2, 'J', 1),
   ];
   const MEL_HEAD_BACK = [
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 3, 'J', 2, 'H', 4, 'J', 2, 'H', 3, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('.', 1, 'H', 14, '.', 1),
-    seg('H', 6, 'f', 4, 'H', 6),
-    seg('H', 3, 'w', 10, 'H', 3),
+    seg('.', 2, 'J', 1, 'H', 1, 'J', 1, 'H', 2, 'J', 2, 'H', 2, 'J', 1, 'H', 1, 'J', 1, '.', 2),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 2, 'J', 1, 'H', 3, 'J', 1, 'H', 1, '.', 1),
+    seg('H', 1, 'J', 1, 'H', 4, 'J', 1, 'H', 2, 'J', 1, 'H', 4, 'J', 1, 'H', 1),
+    seg('.', 1, 'H', 3, 'J', 1, 'H', 6, 'J', 1, 'H', 3, '.', 1),
+    seg('H', 2, 'J', 1, 'H', 3, 'J', 1, 'H', 2, 'J', 1, 'H', 3, 'J', 1, 'H', 2),
+    seg('J', 1, 'H', 5, 'J', 1, 'H', 2, 'J', 1, 'H', 5, 'J', 1),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 2, 'J', 1, 'H', 3, 'J', 1, 'H', 1, '.', 1),
+    seg('J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1),
+    seg('.', 1, 'H', 1, 'J', 1, 'H', 2, 'J', 1, 'H', 4, 'J', 1, 'H', 2, 'J', 1, 'H', 1, '.', 1),
+    seg('H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 4, 'J', 1, 'H', 3, 'J', 1, 'H', 1),
+    seg('J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1),
   ];
+  // facing right: one almond eye, the nose just breaking the profile
   const MEL_SIDE_HEAD = [
-    seg('.', 2, 'H', 10, '.', 4),
-    seg('.', 2, 'H', 2, 'J', 4, 'H', 4, '.', 4),
-    seg('.', 1, 'H', 5, 'f', 5, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 5, 'f', 2, 'o', 2, 'f', 1, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 1, 'l', 1, 'e', 1, 'l', 1, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 1, 'o', 2, 'f', 1, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 5, '.', 4),
-    seg('.', 1, 'H', 6, 'f', 4, '.', 5),
-    seg('.', 1, 'H', 6, 'f', 4, '.', 5),
-    seg('.', 1, 'H', 5, 'f', 4, '.', 6),
-    seg('H', 4, 'w', 7, '.', 5),
+    seg('.', 2, 'H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 4, '.', 4),
+    seg('.', 1, 'H', 2, 'J', 1, 'H', 4, 'J', 1, 'H', 3, '.', 4),
+    seg('H', 1, 'J', 1, 'H', 6, 'f', 3, 'H', 1, '.', 4),
+    seg('.', 1, 'H', 3, 'J', 1, 'H', 2, 'f', 5, '.', 4),
+    seg('H', 2, 'J', 1, 'H', 4, 'f', 2, 'e', 1, 'f', 2, '.', 4),
+    seg('J', 1, 'H', 6, 'f', 2, 'E', 1, 'f', 2, '.', 4),
+    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 4, 'd', 1, '.', 4),
+    seg('J', 1, 'H', 6, 'f', 2, 'Q', 1, 'q', 1, '.', 5),
+    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 4, '.', 5),
+    seg('H', 1, 'J', 1, 'H', 5, 'f', 3, '.', 6),
+    seg('J', 1, 'H', 4, 'w', 6, '.', 5),
   ];
-  const MEL_SPRITE = [...MEL_HEAD_FRONT, ...TORSO, ...LEGS_A];
+  // the curls fall past her shoulders, front and back
+  const MEL_TORSO = [
+    seg('J', 1, 'H', 3, 'w', 8, 'H', 3, 'J', 1),
+    seg('H', 1, 'J', 1, 'w', 2, 'o', 1, 'w', 6, 'o', 1, 'w', 2, 'J', 1, 'H', 1),
+    seg('.', 1, 'H', 1, 'w', 2, 'o', 1, 'w', 2, 'a', 2, 'w', 2, 'o', 1, 'w', 2, 'H', 1, '.', 1),
+    ...TORSO.slice(3),
+  ];
+  const MEL_BACK_TORSO = [
+    seg('J', 1, 'H', 3, 'J', 1, 'H', 6, 'J', 1, 'H', 3, 'J', 1),
+    seg('H', 1, 'J', 1, 'w', 2, 'H', 2, 'J', 1, 'H', 2, 'J', 1, 'H', 2, 'w', 2, 'J', 1, 'H', 1),
+    seg('.', 1, 'H', 1, 'w', 2, 'o', 1, 'w', 1, 'H', 4, 'w', 1, 'o', 1, 'w', 2, 'H', 1, '.', 1),
+    ...TORSO.slice(3),
+  ];
+  const MEL_SPRITE = [...MEL_HEAD_FRONT, ...MEL_TORSO, ...LEGS_A];
   const MEL_SPRITES = {
     down: MEL_SPRITE,
-    up:   [...MEL_HEAD_BACK, ...TORSO, ...LEGS_A],
+    up:   [...MEL_HEAD_BACK, ...MEL_BACK_TORSO, ...LEGS_A],
     side: [...MEL_SIDE_HEAD, ...SIDE_TORSO, ...SIDE_LEGS_A],
+  };
+
+  // every row of every band sprite, for the suite to check widths and palette keys
+  const BAND_SPRITES = {
+    seb: [PLAYER_SPRITES, SPRITE_PALETTE],
+    mike: [MIKE_SPRITES, MIKE_PALETTE],
+    mel: [MEL_SPRITES, MEL_PALETTE],
   };
 
   function drawSprite(grid, dx, dy, flip, palette = SPRITE_PALETTE) {
@@ -2398,8 +2434,7 @@
   }
   // Guitar slung across the front — neck peeking over the shoulder, body hanging down.
   // `hang` is how far off centre the whole instrument sits, and it is what keeps the
-  // neck off the face: Mel's is only four pixels wide, so a neck at hang 4 covered a
-  // whole lens of her glasses.
+  // neck off the face: a neck at hang 4 ran straight up the middle of Mel's.
   // A strung instrument drawn as two overlapping bouts joined by a waist, plus a
   // fretted neck and hardware — reads as a guitar silhouette rather than a stack of boxes.
   // ---------- the band's instruments ----------
@@ -2478,8 +2513,8 @@
     '..dddddd...',
     '...ddddd...',
   ];
-  // `hang` is still load-bearing: Mel's face is four pixels wide, so a neck sitting on
-  // centre covers a whole lens of her glasses.
+  // `hang` is still load-bearing: a neck sitting on centre runs up the middle of Mel's
+  // face.
   function drawInstrument(grid, x, y, flip, finish, hang, s) {
     const pal = finish ? Object.assign({}, INSTRUMENT_PALETTE, { r: finish })
                        : INSTRUMENT_PALETTE;

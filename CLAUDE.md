@@ -272,11 +272,17 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   names the item, then the room's elite, then the door. There is deliberately **no**
   off-screen pointer — finding things is meant to be the work. Landmarks mounted on a
   room's top wall must sit below world y ≈ 28 or the banner covers them.
-- **Mel's face is six pixels wide, tapering to four.** Sebastian and Mike are eight
-  tapering to six, and an earlier pass ran Mel at four tapering to two on the reasoning
-  that eight read as heavier than she is. It overshot — at four she read as gaunt. Two
-  pixels narrower than the others at every row is the difference the design wanted; the
-  hair volume and the round glasses carry the rest. `melSpeed()` is `62 + stage.index
+- **Mel and Mike were redrawn from reference photos** (2026-10-17, first drawn for the
+  8-bit tee). Mel: near-black curls with lighter flecks falling past her shoulders, bangs
+  swept to the centre, 1x2 almond eyes, a two-tone berry lip and **no glasses** — the round
+  glasses are Sebastian's. Her face is now **eight pixels tapering to six**, the same as
+  Sebastian's and Mike's; two earlier passes ran it at four and then six on the reasoning
+  that she is slimmer, and Sebastian found both too thin once the heads were drawn from
+  photos. Mike: a dark cap with a lighter panel, a full beard, no sunglasses, and his own
+  shoulder row (`MIKE_TORSO`), because `TORSO` puts Sebastian's long hair on the shoulders.
+  `BAND_SPRITES` lists every pose, and `checks/gameplay.js` asserts each row is 16 wide,
+  each pose matches Sebastian's height, and every pixel has a palette entry — a missing
+  key does not throw, it just paints the previous pixel's colour. `melSpeed()` is `62 + stage.index
   * 12` (62–122 px/s), eased down from 74–144 because she outran the room.
 - **Mel is not a companion.** She runs the room on her own (`updateMel`), faster and
   further away each stage, and drops her **bass boost** wherever she happens to be.
@@ -312,8 +318,7 @@ The traps behind all of this, each of which silently yields a blank or wrong res
   band scale the sprites are **taller than the people holding them**, so they draw at
   ~0.7 of it; and the reference's charcoal fretboard is invisible against the dark
   stage, so `n` is warm rosewood here. `hang` survives from the old version and is still
-  load-bearing — Mel's face is four pixels wide, so a neck on centre covers a lens of
-  her glasses.
+  load-bearing — a neck on centre would cover half of Mel's face.
 - **The bathroom is deliberately dim.** It used to be near-white and glared next to
   every other room, and nothing dropped on that floor stood out. The whole `bathroom`
   theme sits about 20% darker now, and the cable's plate is yellow (`ITEM_COLOR.cable`)
