@@ -1436,7 +1436,7 @@
     seg('.', 4, 'C', 8, '.', 4),
     seg('.', 3, 'C', 1, 'K', 7, 'C', 1, '.', 4),
     seg('.', 3, 'C', 12, '.', 1),
-    seg('.', 3, 'H', 2, 'f', 7, '.', 4),
+    seg('.', 3, 'H', 2, 'f', 6, '.', 5),
     seg('.', 3, 'H', 1, 'B', 1, 'f', 3, 'o', 2, 'f', 1, '.', 5),
     seg('.', 3, 'H', 1, 'B', 1, 'f', 4, 'e', 1, 'f', 1, '.', 5),
     seg('.', 3, 'B', 2, 'f', 6, 'd', 1, '.', 4),
@@ -1494,17 +1494,19 @@
     seg('H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 4, 'J', 1, 'H', 3, 'J', 1, 'H', 1),
     seg('J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1, 'H', 4, 'J', 1),
   ];
-  // facing right: one almond eye, the nose just breaking the profile
+  // facing right: one almond eye, four pixels of face front to back. The profile is a
+  // straight edge with the nose only a shade on it -- a nose pixel past the edge, on a
+  // face this small, reads as a long beak.
   const MEL_SIDE_HEAD = [
     seg('.', 2, 'H', 1, 'J', 1, 'H', 3, 'J', 1, 'H', 4, '.', 4),
     seg('.', 1, 'H', 2, 'J', 1, 'H', 4, 'J', 1, 'H', 3, '.', 4),
-    seg('H', 1, 'J', 1, 'H', 6, 'f', 3, 'H', 1, '.', 4),
-    seg('.', 1, 'H', 3, 'J', 1, 'H', 2, 'f', 5, '.', 4),
-    seg('H', 2, 'J', 1, 'H', 4, 'f', 2, 'e', 1, 'f', 2, '.', 4),
-    seg('J', 1, 'H', 6, 'f', 2, 'E', 1, 'f', 2, '.', 4),
-    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 4, 'd', 1, '.', 4),
+    seg('H', 1, 'J', 1, 'H', 6, 'f', 2, 'H', 1, '.', 5),
+    seg('.', 1, 'H', 3, 'J', 1, 'H', 2, 'f', 4, '.', 5),
+    seg('H', 2, 'J', 1, 'H', 4, 'f', 2, 'e', 1, 'f', 1, '.', 5),
+    seg('J', 1, 'H', 6, 'f', 2, 'E', 1, 'f', 1, '.', 5),
+    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 3, 'd', 1, '.', 5),
     seg('J', 1, 'H', 6, 'f', 2, 'Q', 1, 'q', 1, '.', 5),
-    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 4, '.', 5),
+    seg('.', 1, 'H', 2, 'J', 1, 'H', 3, 'f', 3, '.', 6),
     seg('H', 1, 'J', 1, 'H', 5, 'f', 3, '.', 6),
     seg('J', 1, 'H', 4, 'w', 6, '.', 5),
   ];
