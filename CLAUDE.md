@@ -471,10 +471,18 @@ elsewhere and go stale:
 - **Store** — the real shop is `https://airhockey.bigcartel.com`. **No `band`** — the
   `airhockeyband.bigcartel.com` subdomain the site used to link 404s on every path,
   which silently broke all six store links. Verify with `curl -o /dev/null -w '%{http_code}'`
-  before believing either. The five products and prices on the site are the real ones,
-  each linking to its own product page, and their photos live in `merch/`: cut-out
-  **PNGs with real transparency** (palette index 0 has `alpha 0`), so they keep the
-  pastel `.product-art` tile showing through and must not be flattened to JPEG.
+  before believing either. The site shows **8 tiles for 5 Big Cartel listings** (the
+  free Gold plan's limit, one photo each), as of 2026-10-21: box logo tee and show logo
+  tee (both → `spaced-tee-unisex`, the "Logo Tee" listing — the permalink is a relic),
+  walkthrough tee, show logo hoodie and box logo hoodie (both → `hoodie-unisex`), washed
+  cap and beanie (both → `washed-cap`, the "Caps & Beanies" listing), fanny pack. Prices
+  shown must match the store: tees from $30 ($33 2XL+), hoodies from $55, cap $28, beanie
+  $25, fanny pack $36. Tile photos live in `merch/`: 692px cut-out **PNGs with real
+  transparency**, built from Printful's own mockups (big item top-right, other colours
+  smaller below), so they keep the pastel `.product-art` tile showing through and must
+  not be flattened to JPEG. The tools that make them (`tile.js`, `cutout.py`,
+  `unshadow.py`, `compose-srgb.js` for the store's cream listing photos) are archived in
+  `memory/archive/tools/` — the scratchpad they were written in gets purged.
 - **Band photos** — `photos/` is **globbed into the upload zip**, so it holds only what
   `index.html` actually references; unused frames belong in `memory/archive/<stamp>/
   original-photos/`, and `page.py` now fails on any asset that ships unreferenced.
