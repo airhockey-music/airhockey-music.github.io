@@ -451,7 +451,9 @@ Bandcamp has no shows section either, so Linktree is the only readable source fo
 **The site shows no flyers**, on purpose: Sebastian decided on 2026-10-13 to keep the
 listings text-only and consistent. With no shows, the block holds a single
 `<p class="shows-empty">` line, and unknown doors, cover or age become `more info tbd`
-rather than a guess. Chat attachments *do* reach the disk now, under the session's
+rather than a guess. A show with a ticket page carries an `<a class="show-tix">` pill
+inside its `.show-meta` (added 2026-10-25 for the 13 Nov Eventbrite link) — copy that
+pattern when a listing has one. Chat attachments *do* reach the disk now, under the session's
 `images/` folder.
 
 **The same task also checks Bandcamp for new releases** (added 2026-10-13). It diffs the
@@ -494,12 +496,14 @@ elsewhere and go stale:
   `airhockeyband.bigcartel.com` subdomain the site used to link 404s on every path,
   which silently broke all six store links. Verify with `curl -o /dev/null -w '%{http_code}'`
   before believing either. The site shows **8 tiles for 5 Big Cartel listings** (the
-  free Gold plan's limit, one photo each), as of 2026-10-21: box logo tee and show logo
+  free Gold plan's limit, one photo each), as of 2026-10-25: box logo tee and airhockey
   tee (both → `spaced-tee-unisex`, the "Logo Tee" listing — the permalink is a relic),
-  walkthrough tee, show logo hoodie and box logo hoodie (both → `hoodie-unisex`), washed
+  walkthrough tee, airhockey hoodie and box logo hoodie (both → `hoodie-unisex`), washed
   cap and beanie (both → `washed-cap`, the "Caps & Beanies" listing), fanny pack. Prices
   shown must match the store: tees from $30 ($33 2XL+), hoodies from $55, cap $28, beanie
-  $25, fanny pack $36. Tile photos live in `merch/`: 692px cut-out **PNGs with real
+  $25, fanny pack $36. The design once called "show logo" is named **Airhockey**
+  everywhere — tiles, Big Cartel options, descriptions and listing photos — though its
+  image files (`merch/show-logo-tee.png`, `merch/hoodie-show.png`) kept their names. Tile photos live in `merch/`: 692px cut-out **PNGs with real
   transparency**, built from Printful's own mockups (big item top-right, other colours
   smaller below), so they keep the pastel `.product-art` tile showing through and must
   not be flattened to JPEG. The tools that make them (`tile.js`, `cutout.py`,

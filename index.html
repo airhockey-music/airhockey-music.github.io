@@ -702,6 +702,14 @@
   .show-meta { display: flex; flex-direction: column; gap: 0.25rem; text-align: right; }
   .show-meta span { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
   .show-meta .free { color: var(--pink-2); font-weight: 600; }
+  .show-meta .show-tix {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+    color: var(--ink); background: var(--mint-2); border-radius: 40px;
+    padding: 0.35em 0.9em; align-self: flex-end; box-shadow: 2px 2px 0 var(--pink-2);
+    transition: background 0.3s var(--ease);
+  }
+  .show-meta .show-tix:hover { background: var(--yellow); }
+  @media (max-width: 640px) { .show-meta .show-tix { align-self: center; } }
   @media (max-width: 640px) {
     .show { grid-template-columns: auto 1fr; }
     .show-meta { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 0.8rem; text-align: left; }
@@ -1332,7 +1340,8 @@
           <p class="show-bill">with di ivories &middot; shyness</p>
         </div>
         <div class="show-meta">
-          <span>more info tbd</span>
+          <span>11 pm &ndash; 2 am</span>
+          <a class="show-tix" href="https://www.eventbrite.com/e/di-ivories-w-shyness-airhockey-tickets-2003463966656?aff=oddtdtcreator" target="_blank" rel="noopener">tickets</a>
         </div>
       </li>
     </ul>
@@ -1377,8 +1386,8 @@
         <div class="pprice">from $30</div>
       </a>
       <a class="product reveal" data-delay="1" href="https://airhockey.bigcartel.com/product/spaced-tee-unisex" target="_blank" rel="noopener">
-        <div class="product-art film c-mintpink"><img class="shot" src="merch/show-logo-tee.png" alt="show logo tee" loading="lazy" /></div>
-        <div class="pname">show logo tee</div>
+        <div class="product-art film c-mintpink"><img class="shot" src="merch/show-logo-tee.png" alt="airhockey tee" loading="lazy" /></div>
+        <div class="pname">airhockey tee</div>
         <div class="pprice">from $30</div>
       </a>
       <a class="product reveal" data-delay="2" href="https://airhockey.bigcartel.com/product/walkthrough-tee-unisex" target="_blank" rel="noopener">
@@ -1387,8 +1396,8 @@
         <div class="pprice">from $30</div>
       </a>
       <a class="product reveal" data-delay="3" href="https://airhockey.bigcartel.com/product/hoodie-unisex" target="_blank" rel="noopener">
-        <div class="product-art film c-dream"><img class="shot" src="merch/hoodie-show.png" alt="show logo hoodie" loading="lazy" /></div>
-        <div class="pname">show logo hoodie</div>
+        <div class="product-art film c-dream"><img class="shot" src="merch/hoodie-show.png" alt="airhockey hoodie" loading="lazy" /></div>
+        <div class="pname">airhockey hoodie</div>
         <div class="pprice">from $55</div>
       </a>
       <a class="product reveal" href="https://airhockey.bigcartel.com/product/hoodie-unisex" target="_blank" rel="noopener">
