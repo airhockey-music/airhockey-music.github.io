@@ -142,6 +142,8 @@ reason the suite has ever caught anything. The pieces, if you need to iterate on
 | `sfx.py` | **authors** all five audio files from the archived master; `--check` validates what shipped |
 | `audio.py` | decodes the artifact's inlined audio in a real WKWebView and reads the loop points back |
 | `checks/music.js` | the wiring: gain, the mute key, and `loopWindow()` against synthetic buffers |
+| `checks/board.js` | the story, the how-to cards, the score bookkeeping, initials entry, the device board, and the requests the shared board would send (network faked) |
+| `board_sql.py` | `.claude/leaderboard.sql` against the game: run clock, bonus total, `MIN_RUN`, endings and the rude-initials list must agree |
 
 The traps behind all of this, each of which silently yields a blank or wrong result:
 
@@ -348,6 +350,29 @@ The traps behind all of this, each of which silently yields a blank or wrong res
 - **The objective banner wraps rather than shrinking away.** Anything that will not
   fit on one line at 8px breaks into two — that is what keeps `BEAT THE SECURITY
   BOSS` readable on a 180px-wide screen.
+- **A run opens on a story, then two how-to cards.** Phase `intro` is now a four-panel
+  cutscene (`STORY`, drawn full-screen by `drawStory`, typed out at `STORY_CPS`); Enter /
+  Space / a tap finishes the line then moves on, a finished panel moves itself on after
+  `STORY_HOLD`, and Escape skips to phase `howto` — two cards over room one (`howtoLines`:
+  controls and the room loop, then tips and scoring). Replays skip both. Every headless
+  driver therefore starts with **Escape, Enter, Enter**, not a single Enter — `runtime.py`,
+  `checks/playthrough.js` and `marketing/tools/mkgame.py`'s `__mk.start()` all do. The
+  story art must never call `Math.random` (its stars are a fixed scatter), and a check
+  enforces it: the marketing clip seeds the random stream and would drift.
+  The tips are all things the game does — check a new one against the code before
+  writing it on the card.
+- **The leaderboard ranks the clock left at showtime.** `onShowtime()` freezes
+  `finalClock`; `RESULTS_AT` seconds into the curtain call the board asks for three
+  initials (typed, or rolled with the stick / arrows and moved along with HIT / space —
+  edge-triggered in `padEntry`). While it asks, letter keys type rather than steer, M does
+  not mute and R does not replay. The run keeps its own books — `runElapsed` (time in
+  play), `runBonus`, `runPenalty` — and `RUN_TIME - elapsed + bonus - penalty` equals the
+  clock exactly; that identity is what the shared table checks. The shared top ten is a
+  Supabase table (SQL in `.claude/leaderboard.sql`, which `board_sql.py` keeps in step
+  with the game); `BOARD.url` / `BOARD.key` hold the project URL and its **publishable**
+  key, which is public by design. Empty config, `file://`, offline, or the artifact (its
+  CSP blocks outside requests) all fall back to this device's top ten in localStorage, so
+  the artifact copy only ever shows device scores.
 - **Touch is a swivel stick**, not a D-pad: the thumb angle snaps to one of eight
   compass directions and sets the very same `keys.up/down/left/right` flags the
   keyboard sets, so desktop behaviour is untouched by anything in that block.
