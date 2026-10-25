@@ -2244,6 +2244,7 @@
       lashes.length = 0;
     }
     timeLeft += spec.bonus;
+    runBonus += spec.bonus;
     addFx('time', b.x + b.w / 2, b.y, 'up', 0, 1.2, `+${spec.bonus}s`);
     showToast(spec.beaten, 1.6, null);
   }
@@ -2743,7 +2744,7 @@
   };
 
   let stage = null;
-  let phase = 'intro'; // intro | play | toast | win | gameover
+  let phase = 'intro'; // intro (story cutscene) | howto | play | toast | win | gameover
   let timeLeft = RUN_TIME;
   let invuln = 0;
   let stunned = 0;   // shockwave paralysis
@@ -2897,6 +2898,8 @@
     melZoneCooldown = 6;
     drummerTamed = false;
     winClock = 0;
+    runElapsed = 0; runBonus = 0; runPenalty = 0; finalClock = 0;
+    board.mode = 'off'; board.note = ''; board.mine = null; board.rank = null;
     player.weaponItem = null;
     hitsTaken = 0;
     for (let i = 0; i < itemsCollected.length; i++) itemsCollected[i] = false;
@@ -2923,10 +2926,13 @@
     W: 'up', S: 'down', A: 'left', D: 'right',
   };
   window.addEventListener('keydown', (e) => {
+    // while the scoreboard asks for initials, letter keys spell rather than steer --
+    // or W, A, S, D and M could never be typed
+    const typing = entryActive() && e.key.length === 1;
     const dir = KEYMAP[e.key];
-    if (dir) { keys[dir] = true; e.preventDefault(); }
+    if (dir && !typing) { keys[dir] = true; e.preventDefault(); }
     if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
-    if (e.key === 'm' || e.key === 'M') setMusic(!music.on);
+    if ((e.key === 'm' || e.key === 'M') && !typing) setMusic(!music.on);
   });
   window.addEventListener('keyup', (e) => {
     const dir = KEYMAP[e.key];
@@ -2934,16 +2940,31 @@
     if (e.key === ' ') keys.attack = false;
   });
 
-  // shared by the Enter/R keys and by tapping the canvas on touch devices
+  // shared by Enter / Space and by tapping the canvas: steps through the story and the
+  // how-to cards, brings up the scoreboard, moves along the initials, and replays
   function tryAdvancePhase() {
-    if (phase === 'intro') { resetGame(); phase = 'play'; return true; }
+    if (phase === 'intro') { advanceStory(); return true; }
+    if (phase === 'howto') { advanceHowto(); return true; }
+    if (phase === 'win' && board.mode === 'off') { winClock = Math.max(winClock, RESULTS_AT); return true; }
+    if (phase === 'win' && board.mode === 'entry') { entryNext(); return true; }
     if (phase === 'win' || phase === 'gameover') { resetGame(); phase = 'play'; return true; }
     return false;
   }
   window.addEventListener('keydown', (e) => {
-    const isStart = phase === 'intro' && (e.key === 'Enter' || e.key === ' ');
-    const isRestart = (phase === 'win' || phase === 'gameover') && (e.key === 'r' || e.key === 'R');
-    if (isStart || isRestart) { e.preventDefault(); tryAdvancePhase(); }
+    if (phase === 'intro' && e.key === 'Escape') { e.preventDefault(); startHowto(); return; }
+    if (entryActive()) {
+      if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); typeLetter(e.key.toUpperCase()); }
+      else if (e.key === 'Backspace') { e.preventDefault(); board.cursor = Math.max(0, board.cursor - 1); }
+      else if (e.key === 'Enter') { e.preventDefault(); submitScore(); }
+      else if (e.key === 'Escape') { e.preventDefault(); board.mode = 'shown'; }
+      return;   // space and the arrows are read off the pad in update(), like the HIT button
+    }
+    const isNext = (phase === 'intro' || phase === 'howto') && (e.key === 'Enter' || e.key === ' ');
+    const isScore = phase === 'win' && board.mode === 'off' && e.key === 'Enter';
+    // R replays from the curtain call or the board, but never mid-initials
+    const isRestart = (phase === 'gameover' || (phase === 'win' && board.mode !== 'entry')) && (e.key === 'r' || e.key === 'R');
+    if (isRestart) { e.preventDefault(); resetGame(); phase = 'play'; return; }
+    if (isNext || isScore) { e.preventDefault(); tryAdvancePhase(); }
   });
   canvas.addEventListener('touchstart', (e) => { if (tryAdvancePhase()) e.preventDefault(); }, { passive: false });
   canvas.addEventListener('click', () => tryAdvancePhase());
@@ -3096,7 +3117,7 @@
     } else {
       const missing = itemsCollected.findIndex((v) => !v);
       if (missing === -1) {
-        showToast('SHOWTIME!', 1.2, () => { phase = 'win'; winClock = 0; playSfx('cheer'); });
+        showToast('SHOWTIME!', 1.2, () => { phase = 'win'; winClock = 0; playSfx('cheer'); onShowtime(); });
       } else {
         showToast('GEAR STILL MISSING - BACK TO WORK!', 1.4, () => loadStage(missing));
       }
@@ -3455,8 +3476,14 @@
       if (toastTimer <= 0) finishToast();
       return;
     }
-    if (phase === 'win') { winClock += dt; return; }   // the curtain call runs itself
-    if (phase !== 'play') return;
+    if (phase === 'intro') { updateStory(dt); return; }
+    if (phase === 'win') {                       // the curtain call runs itself
+      winClock += dt;
+      if (board.mode === 'off' && winClock >= RESULTS_AT) openEntry();
+      if (board.mode === 'entry') padEntry();
+      return;
+    }
+    if (phase !== 'play') return;               // howto waits for Enter / a tap
 
     if (stunned > 0) stunned -= dt;
     const rooted = stunned > 0;
@@ -3506,6 +3533,7 @@
     }
 
     timeLeft -= dt;
+    runElapsed += dt;
     if (timeLeft <= 0) {
       // the clock covers the whole run, so it running out ends the run
       timeLeft = 0;
@@ -3575,6 +3603,7 @@
       if (Math.abs(d - wv.r) < 6) {
         invuln = 1.2;
         stunned = 1.6;                       // rooted in place, can't move or swing
+        runPenalty += Math.min(6, timeLeft);
         timeLeft = Math.max(0, timeLeft - 6);
       }
     }
@@ -4139,16 +4168,6 @@
     const m = layoutName === 'portrait' ? 8 : 20;
     return { x: m, y: HUD_H + 8, w: BASE_W - m * 2, h: BASE_H - HUD_H - 26 };
   }
-  function drawIntroBox() {
-    const lines = [
-      'AIRHOCKEY', '',
-      'DOORS OPEN SOON AND', 'MEL IS MISSING.', '',
-      'SEBASTIAN MUST FIND', 'HIS GEAR ACROSS THE', 'VENUE BEFORE SHOWTIME.',
-    ];
-    const info = drawTextBlock(lines, storyBox().x, storyBox().y, storyBox().w, storyBox().h,
-                               '#9ff0cb', 16);
-    if (Math.floor(performance.now() / 500) % 2 === 0) drawPromptBelow(info, 'PRESS ENTER / TAP', '#feffa3');
-  }
   function drawGameOverBox() {
     const lines = [
       'GAME OVER', '',
@@ -4314,8 +4333,9 @@
     ctx.fillStyle = '#241a3d';
     ctx.fillRect(0, 0, BASE_W, BASE_H);
 
-    // flashing 8-bit band logo, blinking on/off in the backdrop
-    if (logoImg.complete && logoImg.naturalWidth > 0 && Math.floor(performance.now() / 220) % 2 === 0) {
+    // flashing 8-bit band logo, blinking on/off in the backdrop (gone once the
+    // scoreboard is up, or it ghosts through behind the initials)
+    if (board.mode === 'off' && logoImg.complete && logoImg.naturalWidth > 0 && Math.floor(performance.now() / 220) % 2 === 0) {
       const logoW = Math.min(120, BASE_W - 48);
       const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
       ctx.drawImage(logoImg, BASE_W / 2 - logoW / 2, 58, logoW, logoH);
@@ -4411,10 +4431,455 @@
     drawAudienceRow(BASE_H - 12, 4.5, 26, Math.ceil(BASE_W / 26) + 1, '#1c1730', 2);
     drawAudienceRow(BASE_H - 6, 6, 32, Math.ceil(BASE_W / 32) + 1, '#100c1c', 10);
 
+    if (board.mode !== 'off') { drawResults(); return; }
     drawFittedCenter('SHOWTIME!', BASE_W / 2, 14, BASE_W - 40, 10, '#feffa3');
     drawFittedCenter(finaleLine(), BASE_W / 2, 30, BASE_W - 40, 8, '#f0eef5');
-    drawFittedCenter('PRESS R / TAP TO REPLAY', BASE_W / 2, 44, BASE_W - 40, 8, '#9ff0cb');
+    drawFittedCenter(coarsePointer ? 'TAP FOR YOUR SCORE' : 'ENTER FOR YOUR SCORE', BASE_W / 2, 44, BASE_W - 40, 8, '#9ff0cb');
   }
+
+  // ---------- the story ----------
+  // Four panels before the first room, each typed out under a little scene drawn from
+  // the game's own sprites. Enter / Space / a tap finishes the line or moves on, Escape
+  // skips to the how-to cards, and a finished panel moves itself on after STORY_HOLD.
+  // Replays (R after a win or a game over) skip the story and the cards entirely.
+  const STORY = [
+    { text: 'TONIGHT: AIRHOCKEY, LIVE. DOORS OPEN SOON.', art: drawStoryVenue },
+    { text: 'BUT THE GEAR GOT SCATTERED ALL OVER THE VENUE.', art: drawStoryGear },
+    { text: 'AND MEL IS NOWHERE TO BE FOUND.', art: drawStoryMel },
+    { text: `SEBASTIAN HAS ${fmtClock(RUN_TIME)} TO GET IT ALL BACK.`, art: drawStorySeb },
+  ];
+  const STORY_CPS = 26;      // typewriter, characters a second
+  const STORY_HOLD = 1.8;    // how long a finished line stays up before the next panel
+  let storyPanel = 0, storyClock = 0;
+  let howtoCard = 0;
+  const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
+  function fmtClock(secs) {
+    const s = Math.max(0, Math.floor(secs));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+  function storyTyped() { return storyClock * STORY_CPS >= STORY[storyPanel].text.length; }
+  function updateStory(dt) {
+    storyClock += dt;
+    if (storyClock * STORY_CPS >= STORY[storyPanel].text.length + STORY_HOLD * STORY_CPS) advanceStory();
+  }
+  function advanceStory() {
+    if (!storyTyped()) { storyClock = STORY[storyPanel].text.length / STORY_CPS; return; }
+    if (storyPanel < STORY.length - 1) { storyPanel += 1; storyClock = 0; return; }
+    startHowto();
+  }
+  function startHowto() {
+    resetGame();
+    phase = 'howto';
+    howtoCard = 0;
+  }
+  function advanceHowto() {
+    if (howtoCard === 0) { howtoCard = 1; return; }
+    phase = 'play';
+  }
+
+  // night sky with a fixed scatter of stars (fixed, not random: the story must look the
+  // same every time, and must not pull on the random stream the run itself uses)
+  function drawStoryNight(h, t) {
+    ctx.fillStyle = '#140f26';
+    ctx.fillRect(0, 0, BASE_W, h);
+    for (let i = 0; i < 30; i++) {
+      ctx.globalAlpha = 0.35 + 0.35 * Math.sin(t * 2.4 + i * 1.7);
+      ctx.fillStyle = i % 3 ? '#f0eef5' : '#eecbff';
+      ctx.fillRect(Math.round(((i * 73) % 97) / 97 * BASE_W), Math.round(((i * 41) % 53) / 53 * h * 0.45), 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawStoryVenue(t, h) {
+    drawStoryNight(h, t);
+    const groundY = Math.round(h * 0.8);
+    const bw = Math.min(BASE_W - 24, 236), bx = Math.round((BASE_W - bw) / 2), top = Math.round(h * 0.14);
+    ctx.fillStyle = '#3a2233';
+    ctx.fillRect(bx, top, bw, groundY - top);
+    ctx.fillStyle = '#4c2d3d';
+    for (let y = top + 2, r = 0; y < groundY - 4; y += 6, r++) {
+      for (let x = bx + 2 + (r % 2 ? 0 : 5); x < bx + bw - 9; x += 10) ctx.fillRect(x, y, 8, 4);
+    }
+    // the marquee, bulbs chasing round it
+    const mw = Math.min(bw - 16, 150), mx = Math.round(BASE_W / 2 - mw / 2), my = top + 8, mh = 32;
+    ctx.fillStyle = '#0d0b14';
+    ctx.fillRect(mx, my, mw, mh);
+    for (let x = mx + 3, k = 0; x < mx + mw - 2; x += 6, k++) {
+      ctx.fillStyle = (Math.floor(t * 6) + k) % 3 ? '#feffa3' : '#6b6350';
+      ctx.fillRect(x, my + 2, 2, 2);
+      ctx.fillRect(x, my + mh - 4, 2, 2);
+    }
+    ctx.textBaseline = 'top';
+    drawFittedCenter('AIRHOCKEY', BASE_W / 2, my + 8, mw - 12, 8, '#9ff0cb');
+    drawFittedCenter('TONIGHT', BASE_W / 2, my + 19, mw - 12, 6, '#eecbff');
+    // a lit doorway, and the line inching toward it
+    const dw = 22, dh = 30, dx = Math.round(BASE_W / 2 - dw / 2);
+    ctx.fillStyle = '#120d1f';
+    ctx.fillRect(dx, groundY - dh, dw, dh);
+    ctx.globalAlpha = 0.28 + 0.08 * Math.sin(t * 2);
+    ctx.fillStyle = '#feffa3';
+    ctx.fillRect(dx + 2, groundY - dh + 2, dw - 4, dh - 2);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#2a2440';
+    ctx.fillRect(0, groundY, BASE_W, h - groundY);
+    const shuffle = Math.min(1, t / 3) * 8;
+    ctx.fillStyle = '#0b0816';
+    for (let i = 0; i < 9; i++) {
+      const qx = Math.round(dx + dw + 10 + i * 13 - shuffle);
+      if (qx > BASE_W + 4) break;
+      ctx.beginPath(); ctx.arc(qx, groundY - 14, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(qx - 3, groundY - 11, 6, 11);
+    }
+  }
+  function drawStoryGear(t, h) {
+    ctx.fillStyle = '#221a35';
+    ctx.fillRect(0, 0, BASE_W, h);
+    ctx.fillStyle = '#1b1430';
+    for (let y = 6; y < h; y += 10) ctx.fillRect(0, y, BASE_W, 1);
+    const cx = Math.round(BASE_W / 2), cy = Math.round(h * 0.76);
+    // the road case, lid flung open
+    ctx.fillStyle = '#4a4458';
+    ctx.fillRect(cx - 22, cy - 8, 44, 18);
+    ctx.fillStyle = '#0d0918';
+    ctx.fillRect(cx - 19, cy - 6, 38, 5);                 // the empty foam inside
+    ctx.fillStyle = '#5c566c';
+    ctx.fillRect(cx - 22, cy - 20 - Math.min(1, t * 3) * 6, 44, 6);
+    ctx.fillStyle = '#9aa5ac';
+    ctx.fillRect(cx - 22, cy + 1, 44, 1);
+    for (const [ox, oy] of [[-22, -8], [19, -8], [-22, 7], [19, 7]]) ctx.fillRect(cx + ox, cy + oy, 3, 3);
+    // the six pieces of gear, thrown out across the venue
+    const out = Math.min(1, t / 1.4), ease = 1 - Math.pow(1 - out, 3);
+    const reach = Math.min(BASE_W * 0.42, h * 0.7);
+    WEAPON_LADDER.forEach((item, i) => {
+      const ang = Math.PI * (1.08 + i * 0.168);
+      const x = Math.round(cx + Math.cos(ang) * reach * ease);
+      const y = Math.round(cy - 6 + Math.sin(ang) * reach * 0.85 * ease - Math.sin(out * Math.PI) * 10);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = ITEM_COLOR[item];
+      ctx.fillRect(x - 6, y - 6, 12, 12);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COLOR.outline;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x - 6.5, y - 6.5, 13, 13);
+      drawIcon(ITEM_SHAPES[item], x - 4, y - 4, ITEM_COLOR[item]);
+    });
+  }
+  function drawStoryMel(t, h) {
+    for (let y = 0; y < h; y += TILE) {
+      for (let x = 0; x < BASE_W; x += TILE) {
+        ctx.fillStyle = ((x + y) / TILE) % 2 ? '#2a2140' : '#241c38';
+        ctx.fillRect(x, y, TILE, TILE);
+      }
+    }
+    const sp = MEL_SPRITES.side, scale = 2;
+    const sw = sp[0].length * scale, sh = sp.length * scale;
+    const lap = BASE_W + sw * 2;           // one crossing every 3.6s: on screen for the whole line
+    const x = Math.round(-sw + (t * lap / 3.6) % lap);
+    const y = Math.round(h * 0.62 - sh / 2) - (Math.floor(t * 8) % 2);
+    // her trail: alternating prints fading out behind her, as in the rooms
+    for (let k = 1; k < 14; k++) {
+      const fx = x + sw / 2 - k * 10;
+      if (fx < -4) break;
+      ctx.globalAlpha = 0.6 * (1 - k / 14);
+      ctx.fillStyle = '#0d0918';
+      ctx.fillRect(Math.round(fx), y + sh - 2 + (k % 2 ? 3 : -1), 4, 2);
+    }
+    ctx.globalAlpha = 1;
+    drawSpriteScaled(sp, x, y, false, MEL_PALETTE, scale);
+    if (Math.floor(t * 2) % 2 === 0) drawFittedCenter('?', BASE_W / 2, Math.round(h * 0.16), 30, 16, '#eecbff');
+  }
+  function drawStorySeb(t, h) {
+    drawStoryNight(h, t);
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = '#feffa3';
+    ctx.beginPath();
+    ctx.moveTo(BASE_W / 2 - 6, 0); ctx.lineTo(BASE_W / 2 + 6, 0);
+    ctx.lineTo(BASE_W / 2 + 44, h); ctx.lineTo(BASE_W / 2 - 44, h);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    const grid = PLAYER_SPRITES.down[Math.floor(t * 3) % 2], scale = 2;
+    drawSpriteScaled(grid, Math.round(BASE_W / 2 - grid[0].length * scale / 2),
+                     Math.round(h * 0.86 - grid.length * scale), false, SPRITE_PALETTE, scale);
+    const clock = fmtClock(RUN_TIME);
+    drawFittedCenter(Math.floor(t * 2) % 2 ? clock : clock.replace(':', ' '), BASE_W / 2, Math.round(h * 0.14), BASE_W - 20, 16, '#feffa3');
+  }
+  function drawStory() {
+    const p = STORY[storyPanel];
+    const boxH = layoutName === 'portrait' ? 64 : 50;
+    const artH = BASE_H - boxH;
+    ctx.fillStyle = '#0d0918';
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, BASE_W, artH); ctx.clip();
+    p.art(storyClock, artH);
+    ctx.restore();
+
+    const bx = 6, by = artH + 2, bw = BASE_W - 12, bh = boxH - 8;
+    ctx.fillStyle = 'rgba(10,6,20,0.92)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#9ff0cb';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+    // wrap the whole line first, then reveal it, so words never hop between lines
+    const maxW = bw - 16;
+    let fontPx = 8, lh = 12;
+    let wrapped = wrapLines([p.text], maxW, fontPx);
+    while (fontPx > 5 && (wrapped.length * lh > bh - 16 || wrapped.some((l) => measureAt(l, fontPx) > maxW))) {
+      fontPx -= 1; lh = fontPx + 4;
+      wrapped = wrapLines([p.text], maxW, fontPx);
+    }
+    ctx.font = `${fontPx}px "Press Start 2P", monospace`;
+    ctx.fillStyle = '#f0eef5';
+    ctx.textBaseline = 'top';
+    let left = Math.floor(storyClock * STORY_CPS);
+    wrapped.forEach((line, i) => {
+      if (left > 0) ctx.fillText(line.slice(0, left), bx + 8, by + 6 + i * lh);
+      left -= line.length + 1;
+    });
+    // where you are in the story, and how to get on with it
+    for (let i = 0; i < STORY.length; i++) {
+      ctx.fillStyle = i === storyPanel ? '#feffa3' : '#4a4266';
+      ctx.fillRect(bx + 8 + i * 6, by + bh - 7, 4, 3);
+    }
+    if (storyTyped() && Math.floor(performance.now() / 400) % 2 === 0) {
+      ctx.font = '5px "Press Start 2P", monospace';
+      ctx.fillStyle = '#feffa3';
+      ctx.textAlign = 'right';
+      ctx.fillText(coarsePointer ? 'TAP >' : 'ENTER >  ESC SKIPS', bx + bw - 6, by + bh - 9);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // ---------- how to play ----------
+  // Two cards over the first room: the controls and the loop, then the tips and how
+  // you are scored. Everything on them is something the game actually does.
+  function howtoLines() {
+    if (howtoCard === 0) {
+      return [
+        'HOW TO PLAY', '',
+        coarsePointer ? 'MOVE: THE STICK' : 'MOVE: ARROWS / WASD',
+        coarsePointer ? 'SWING: HIT' : 'SWING: SPACE',
+        coarsePointer ? 'MUSIC: TOP RIGHT' : 'MUSIC: M', '',
+        'EVERY ROOM:',
+        '1 FIND YOUR GEAR',
+        '2 BEAT THE BOSS: IT OPENS THE GATE',
+        '3 GET TO THE DOOR',
+      ];
+    }
+    const best = bestEntry();
+    return [
+      'TIPS', '',
+      'NEW GEAR HITS HARDER.',
+      'BOSSES ADD TIME.',
+      "MEL'S BASS BOOST HEALS.",
+      'RED PUCKS GIVE A LIFE.',
+      'MIKE + THE DRUMMER = THE BEST ENDING.', '',
+      'SCORE = CLOCK LEFT AT SHOWTIME.',
+      best ? `BEST: ${best.i} ${fmtClock(best.s)}` : '',
+    ];
+  }
+  function drawHowto() {
+    const b = storyBox();
+    const info = drawTextBlock(howtoLines(), b.x, b.y, b.w, b.h, howtoCard === 0 ? '#9ff0cb' : '#eecbff', 16);
+    const prompt = howtoCard === 0
+      ? (coarsePointer ? 'TAP FOR TIPS' : 'ENTER FOR TIPS')
+      : (coarsePointer ? 'TAP TO START' : 'ENTER TO START');
+    if (Math.floor(performance.now() / 500) % 2 === 0) drawPromptBelow(info, prompt, '#feffa3');
+  }
+
+  // ---------- leaderboard ----------
+  // Ranked by the clock left at showtime. The shared top ten lives in a Supabase table
+  // (the SQL is in .claude/leaderboard.sql). The key below is the project's public
+  // "publishable" key, made to sit in page source: row level security and the table's
+  // CHECK constraints are what guard the board, not secrecy. With no URL set, offline, on
+  // file://, or inside the artifact (whose CSP blocks outside requests) the board falls
+  // back to this device's own top ten in localStorage.
+  const BOARD = { url: 'https://hljnvdtmzoyneqeaonrf.supabase.co', key: 'sb_publishable_rAsM9fPm_fuzFsLEtQBHew_bb8BiVbb', table: 'scores' };
+  const LOCAL_SCORES_KEY = 'airhockey-scores', INITIALS_KEY = 'airhockey-initials';
+  const RESULTS_AT = 6.2;   // seconds of curtain call before the scoreboard comes up
+  const MIN_RUN = 90;       // no real run is shorter; the table refuses anything that is
+  const BLOCKED = new Set(['ASS', 'CUM', 'COK', 'DIC', 'DIK', 'DIX', 'FAG', 'FCK', 'FUC', 'FUK', 'FUQ',
+    'JIZ', 'KKK', 'KYS', 'NIG', 'NGR', 'PUS', 'SEX', 'SHT', 'TIT', 'VAG', 'WTF', 'NAZ', 'HOE']);
+  const board = { mode: 'off', letters: [0, 0, 0], cursor: 0, global: null, net: 'idle',
+                  rank: null, mine: null, note: '' };
+  let runElapsed = 0, runBonus = 0, runPenalty = 0, finalClock = 0;
+  let memScores = [];          // stands in for localStorage where there is none
+  const padWas = {};
+
+  function entryActive() { return phase === 'win' && board.mode === 'entry'; }
+  function endingCode() {
+    if (mikeUnlocked && drummerTamed) return 'band';
+    if (mikeUnlocked) return 'mike';
+    if (drummerTamed) return 'drummer';
+    return 'duo';
+  }
+  const ENDING_TAG = { band: 'BAND', mike: '+MIKE', drummer: '+DRUMS', duo: '' };
+  const byScore = (a, b) => b.s - a.s || (a.t || 0) - (b.t || 0);
+  function validEntry(e) {
+    return e && /^[A-Z]{3}$/.test(e.i) && Number.isFinite(e.s) && e.s >= 0 && ENDING_TAG[e.e] !== undefined;
+  }
+  function loadLocal() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOCAL_SCORES_KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter(validEntry).sort(byScore) : [];
+    } catch (e) { return memScores.slice(); }
+  }
+  function saveLocal(entry) {
+    const list = loadLocal().concat([entry]).sort(byScore).slice(0, 10);
+    memScores = list.slice();
+    try { localStorage.setItem(LOCAL_SCORES_KEY, JSON.stringify(list)); } catch (e) { /* private browsing */ }
+    return list;
+  }
+  function bestEntry() {
+    const list = board.net === 'ok' && board.global ? board.global : loadLocal();
+    return list[0] || null;
+  }
+
+  function boardOnline() {
+    return !!(BOARD.url && BOARD.key && typeof fetch === 'function' &&
+              typeof location !== 'undefined' && /^https?:$/.test(location.protocol));
+  }
+  function boardHeaders(extra) {
+    const h = { apikey: BOARD.key, 'Content-Type': 'application/json' };
+    if (/^eyJ/.test(BOARD.key)) h.Authorization = `Bearer ${BOARD.key}`;   // legacy anon JWT
+    return Object.assign(h, extra || {});
+  }
+  function boardRequest(query, opts) {
+    return fetch(`${BOARD.url.replace(/\/$/, '')}/rest/v1/${BOARD.table}${query}`, opts);
+  }
+  function fetchTop() {
+    if (!boardOnline()) { board.net = 'local'; return null; }
+    board.net = 'loading';
+    return boardRequest('?select=initials,clock_left,ending&order=clock_left.desc,created_at.asc&limit=10',
+                        { headers: boardHeaders() })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((rows) => {
+        board.global = rows.map((r) => ({ i: r.initials, s: r.clock_left, e: r.ending })).filter(validEntry);
+        board.net = 'ok';
+      })
+      .catch(() => { board.net = 'offline'; });
+  }
+  // what goes over the wire: the score and the two numbers it has to agree with, so the
+  // table can refuse a clock nobody could have finished with
+  function scorePayload(entry) {
+    return { initials: entry.i, clock_left: entry.s, elapsed: Math.round(runElapsed),
+             bonus: runBonus, ending: entry.e };
+  }
+  function postScore(entry) {
+    board.net = 'sending';
+    return boardRequest('', { method: 'POST', headers: boardHeaders({ Prefer: 'return=minimal' }),
+                              body: JSON.stringify(scorePayload(entry)) })
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); })
+      .then(() => boardRequest(`?select=id&clock_left=gt.${entry.s}`,
+                               { method: 'HEAD', headers: boardHeaders({ Prefer: 'count=exact' }) }))
+      .then((r) => {
+        const m = /\/(\d+)$/.exec((r.headers && r.headers.get('content-range')) || '');
+        if (m) board.rank = Number(m[1]) + 1;
+      })
+      .then(() => fetchTop())
+      .catch(() => { board.net = 'offline'; });
+  }
+
+  function onShowtime() {
+    finalClock = Math.max(0, Math.floor(timeLeft));
+    board.mode = 'off';
+    board.mine = null; board.rank = null; board.note = '';
+    let last = 'AAA';
+    try { last = localStorage.getItem(INITIALS_KEY) || 'AAA'; } catch (e) { /* none saved */ }
+    if (!/^[A-Z]{3}$/.test(last)) last = 'AAA';
+    board.letters = last.split('').map((c) => c.charCodeAt(0) - 65);
+    board.cursor = 0;
+    fetchTop();
+  }
+  function openEntry() {
+    board.mode = 'entry';
+    // a swing still held from the last fight must not count as a press
+    for (const k of ['up', 'down', 'left', 'right', 'attack']) padWas[k] = !!keys[k];
+  }
+  // the stick / arrows and HIT / space, edge-triggered: up and down roll the letter,
+  // left and right move along, HIT moves on and on the last letter submits
+  function padEntry() {
+    const press = (k) => keys[k] && !padWas[k];
+    if (press('up')) board.letters[board.cursor] = (board.letters[board.cursor] + 1) % 26;
+    if (press('down')) board.letters[board.cursor] = (board.letters[board.cursor] + 25) % 26;
+    if (press('left')) board.cursor = Math.max(0, board.cursor - 1);
+    if (press('right')) board.cursor = Math.min(2, board.cursor + 1);
+    if (press('attack')) entryNext();
+    for (const k of ['up', 'down', 'left', 'right', 'attack']) padWas[k] = !!keys[k];
+  }
+  function typeLetter(ch) {
+    board.letters[board.cursor] = ch.charCodeAt(0) - 65;
+    board.note = '';
+    if (board.cursor < 2) board.cursor += 1;
+  }
+  function entryNext() {
+    if (board.cursor < 2) { board.cursor += 1; return; }
+    submitScore();
+  }
+  function submitScore() {
+    const initials = board.letters.map((n) => String.fromCharCode(65 + n)).join('');
+    if (BLOCKED.has(initials)) { board.note = 'PICK OTHER INITIALS'; board.cursor = 0; return; }
+    try { localStorage.setItem(INITIALS_KEY, initials); } catch (e) { /* private browsing */ }
+    const entry = { i: initials, s: finalClock, e: endingCode(), t: Date.now() };
+    saveLocal(entry);
+    board.mine = entry;
+    board.mode = 'shown';
+    if (boardOnline() && runElapsed >= MIN_RUN) postScore(entry);
+    else if (board.net !== 'ok') board.net = 'local';
+  }
+
+  function drawResults() {
+    ctx.fillStyle = 'rgba(10,6,20,0.84)';
+    ctx.fillRect(0, 0, BASE_W, BASE_H);
+    ctx.textBaseline = 'top';
+    const cx = BASE_W / 2, maxW = BASE_W - 16;
+    drawFittedCenter('SHOWTIME!', cx, 10, maxW, 10, '#feffa3');
+    drawFittedCenter(`CLOCK LEFT ${fmtClock(finalClock)}`, cx, 26, maxW, 8, '#9ff0cb');
+    if (board.mode === 'entry') {
+      drawFittedCenter('ENTER YOUR INITIALS', cx, 50, maxW, 8, '#f0eef5');
+      const size = 16, gap = 10, total = size * 3 + gap * 2, x0 = Math.round(cx - total / 2), y = 70;
+      ctx.font = `${size}px "Press Start 2P", monospace`;
+      ctx.textAlign = 'center';
+      for (let i = 0; i < 3; i++) {
+        const x = x0 + i * (size + gap);
+        ctx.fillStyle = i === board.cursor ? '#feffa3' : '#f0eef5';
+        ctx.fillText(String.fromCharCode(65 + board.letters[i]), x + size / 2, y);
+        if (i === board.cursor && Math.floor(performance.now() / 300) % 2 === 0) ctx.fillRect(x, y + size + 4, size, 2);
+      }
+      ctx.textAlign = 'left';
+      const hints = coarsePointer
+        ? ['STICK UP/DOWN: LETTER', 'HIT: NEXT, THEN OK']
+        : ['TYPE, OR UP/DOWN', 'ENTER: OK   ESC: SKIP'];
+      drawFittedCenter(hints[0], cx, 104, maxW, 6, '#9ff0cb');
+      drawFittedCenter(hints[1], cx, 115, maxW, 6, '#9ff0cb');
+      if (board.note) drawFittedCenter(board.note, cx, 130, maxW, 6, '#e8734a');
+      return;
+    }
+    drawBoardList(48);
+  }
+  function drawBoardList(y0) {
+    const cx = BASE_W / 2, maxW = BASE_W - 16;
+    const shared = board.net === 'ok' && board.global;
+    const list = shared ? board.global : loadLocal();
+    drawFittedCenter(shared ? 'TOP 10 - EVERYONE' : 'TOP 10 - THIS DEVICE', cx, y0, maxW, 7, '#eecbff');
+    const status = { loading: 'LOADING...', sending: 'SENDING...', offline: 'OFFLINE - SAVED HERE' }[board.net];
+    if (status) drawFittedCenter(status, cx, y0 + 10, maxW, 5, '#9aa5ac');
+    const rowH = 12, top = y0 + 22;
+    let mineShown = false;
+    list.slice(0, 10).forEach((e, n) => {
+      const me = board.mine && !mineShown && e.i === board.mine.i && e.s === board.mine.s && e.e === board.mine.e;
+      if (me) mineShown = true;
+      const line = `${String(n + 1).padStart(2, ' ')}. ${e.i} ${fmtClock(e.s)} ${ENDING_TAG[e.e]}`.trimEnd();
+      drawFittedCenter(line, cx, top + n * rowH, maxW, 7, me ? '#feffa3' : '#f0eef5');
+    });
+    if (!list.length) drawFittedCenter('NO SCORES YET', cx, top, maxW, 7, '#f0eef5');
+    const foot = top + 10 * rowH + 2;
+    if (board.mine && !mineShown && board.rank) drawFittedCenter(`YOU: #${board.rank}`, cx, foot - rowH, maxW, 7, '#feffa3');
+    if (Math.floor(performance.now() / 500) % 2 === 0) {
+      drawFittedCenter(coarsePointer ? 'TAP TO PLAY AGAIN' : 'PRESS R TO PLAY AGAIN', cx, Math.min(BASE_H - 12, foot + 2), maxW, 6, '#9ff0cb');
+    }
+  }
+  fetchTop();
 
   // ---------- loop ----------
   let last = performance.now();
@@ -4436,6 +4901,8 @@
 
     if (phase === 'win') {
       drawFinale();
+    } else if (phase === 'intro') {
+      drawStory();
     } else {
       updateCamera();
       ctx.save();
@@ -4468,7 +4935,7 @@
       drawHUD();
       if (phase === 'play' || phase === 'toast') drawObjectiveBanner();
       if (phase === 'toast') drawToastBox();
-      if (phase === 'intro') drawIntroBox();
+      if (phase === 'howto') drawHowto();
       if (phase === 'gameover') drawGameOverBox();
     }
 
