@@ -470,7 +470,7 @@ which is genuinely the band's — it links the Bigcartel, Bandcamp and DistroKid
 and is server-rendered, so a plain fetch reads it.
 
 **Instagram cannot be scanned and it is not worth retrying.** Tested 2026-09-07:
-`https://www.instagram.com/airhockeyband` returns HTTP 200 and 620KB of JavaScript shell
+`https://www.instagram.com/airhockeymusic` (the real handle — Linktree links it; `airhockeyband` is a dead profile the site linked until 2026-10-25) returns HTTP 200 and 620KB of JavaScript shell
 with **no `og:title`, no `og:description` and no captions**. Everything is behind auth.
 Bandcamp has no shows section either, so Linktree is the only readable source for shows.
 **The site shows no flyers**, on purpose: Sebastian decided on 2026-10-13 to keep the
